@@ -5,6 +5,7 @@ import 'package:events_amo/providers/user_provider.dart';
 import 'package:events_amo/services/api_client.dart';
 import 'package:events_amo/services/auth_service.dart';
 import 'package:events_amo/services/event_service.dart';
+import 'package:events_amo/services/navigation_service.dart';
 import 'package:events_amo/services/user_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -38,6 +39,7 @@ class EventsApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: NavigationService.navigatorKey,
       title: 'NeoEvents',
       theme: ThemeData(
         brightness: Brightness.dark,

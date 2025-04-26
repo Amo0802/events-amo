@@ -37,8 +37,7 @@ class _CreateEventPageState extends State<CreateEventPage> {
   
   // Available categories
   final List<String> _availableCategories = [
-    'Music', 'Sports', 'Arts', 'Food', 'Education', 
-    'Technology', 'Business', 'Health', 'Entertainment', 'Other'
+    'Music', 'Sports', 'Art', 'Food', 'Technology'
   ];
 
   @override

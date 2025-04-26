@@ -1,4 +1,5 @@
 import 'package:events_amo/models/event.dart';
+import 'package:events_amo/pages/settings_page.dart';
 import 'package:events_amo/providers/auth_provider.dart';
 import 'package:events_amo/providers/user_provider.dart';
 import 'package:events_amo/widgets/profile_event_card.dart';
@@ -33,19 +34,32 @@ class ProfilePageState extends State<ProfilePage> {
             if (userProvider.isLoading) {
               return const Center(child: CircularProgressIndicator());
             }
-            
+
             final authProvider = Provider.of<AuthProvider>(context);
             final user = authProvider.currentUser;
-            
+
             return CustomScrollView(
               slivers: [
                 _buildAppBar(context),
-                _buildProfileHeader(context, user?.name ?? "Guest", user?.lastName ?? "User", user?.email ?? "guest@example.com"),
-                _buildStatsSection(context, userProvider.attendingEvents.length, 0), // 0 for events created as we don't track this yet
+                _buildProfileHeader(
+                  context,
+                  user?.name ?? "Guest",
+                  user?.lastName ?? "User",
+                  user?.email ?? "guest@example.com",
+                ),
+                _buildStatsSection(
+                  context,
+                  userProvider.attendingEvents.length,
+                  0,
+                ), // 0 for events created as we don't track this yet
                 _buildTabSection(
-                  context, 
-                  userProvider.attendingEvents.isEmpty ? [] : userProvider.attendingEvents, 
-                  userProvider.savedEvents.isEmpty ? [] : userProvider.savedEvents
+                  context,
+                  userProvider.attendingEvents.isEmpty
+                      ? []
+                      : userProvider.attendingEvents,
+                  userProvider.savedEvents.isEmpty
+                      ? []
+                      : userProvider.savedEvents,
                 ),
               ],
             );
@@ -61,20 +75,17 @@ class ProfilePageState extends State<ProfilePage> {
       floating: true,
       title: Text(
         "My Profile",
-        style: TextStyle(
-          fontSize: 26,
-          fontWeight: FontWeight.bold,
-        ),
+        style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
       ),
       actions: [
         IconButton(
-          icon: Icon(
-            Icons.settings_outlined,
-            color: Colors.white,
-            size: 28,
-          ),
+          icon: Icon(Icons.settings_outlined, color: Colors.white, size: 28),
           onPressed: () {
             // Navigate to settings
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => SettingsPage()),
+            );
           },
         ),
         SizedBox(width: 10),
@@ -82,7 +93,12 @@ class ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  Widget _buildProfileHeader(BuildContext context, String firstName, String lastName, String email) {
+  Widget _buildProfileHeader(
+    BuildContext context,
+    String firstName,
+    String lastName,
+    String email,
+  ) {
     return SliverToBoxAdapter(
       child: Container(
         padding: EdgeInsets.all(20),
@@ -90,23 +106,19 @@ class ProfilePageState extends State<ProfilePage> {
           children: [
             CircleAvatar(
               radius: 50,
-              backgroundImage: NetworkImage('https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80'),
+              backgroundImage: NetworkImage(
+                'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80',
+              ),
             ),
             SizedBox(height: 16),
             Text(
               "$firstName $lastName",
-              style: TextStyle(
-                fontSize: 26,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
             ),
             SizedBox(height: 8),
             Text(
               email,
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.grey[400],
-              ),
+              style: TextStyle(fontSize: 16, color: Colors.grey[400]),
             ),
             SizedBox(height: 16),
             ElevatedButton(
@@ -114,7 +126,9 @@ class ProfilePageState extends State<ProfilePage> {
                 // Edit profile
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: Theme.of(context).colorScheme.secondary.withValues(alpha: 0.2),
+                backgroundColor: Theme.of(
+                  context,
+                ).colorScheme.secondary.withValues(alpha: 0.2),
                 foregroundColor: Theme.of(context).colorScheme.secondary,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(30),
@@ -133,7 +147,11 @@ class ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  Widget _buildStatsSection(BuildContext context, int attendedCount, int createdCount) {
+  Widget _buildStatsSection(
+    BuildContext context,
+    int attendedCount,
+    int createdCount,
+  ) {
     return SliverToBoxAdapter(
       child: Container(
         padding: EdgeInsets.symmetric(vertical: 10),
@@ -151,7 +169,11 @@ class ProfilePageState extends State<ProfilePage> {
           children: [
             _buildStat(context, "Events\nAttended", attendedCount.toString()),
             _buildStat(context, "Events\nCreated", createdCount.toString()),
-            _buildStat(context, "Friends", "0"), // Placeholder for future feature
+            _buildStat(
+              context,
+              "Friends",
+              "0",
+            ), // Placeholder for future feature
           ],
         ),
       ),
@@ -173,16 +195,17 @@ class ProfilePageState extends State<ProfilePage> {
         Text(
           label,
           textAlign: TextAlign.center,
-          style: TextStyle(
-            fontSize: 14,
-            color: Colors.grey[400],
-          ),
+          style: TextStyle(fontSize: 14, color: Colors.grey[400]),
         ),
       ],
     );
   }
 
-  Widget _buildTabSection(BuildContext context, List<Event> attendingEvents, List<Event> savedEvents) {
+  Widget _buildTabSection(
+    BuildContext context,
+    List<Event> attendingEvents,
+    List<Event> savedEvents,
+  ) {
     return SliverToBoxAdapter(
       child: DefaultTabController(
         length: 3,
@@ -217,26 +240,24 @@ class ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  Widget _buildUpcomingEvents(BuildContext context, List<Event> attendingEvents) {
+  Widget _buildUpcomingEvents(
+    BuildContext context,
+    List<Event> attendingEvents,
+  ) {
     if (attendingEvents.isEmpty) {
       return Center(
         child: Text(
           "You have no upcoming events",
-          style: TextStyle(
-            color: Colors.grey[500],
-            fontSize: 16,
-          ),
+          style: TextStyle(color: Colors.grey[500], fontSize: 16),
         ),
       );
     }
-    
+
     return ListView.builder(
       padding: EdgeInsets.symmetric(horizontal: 20),
       itemCount: attendingEvents.length,
       itemBuilder: (context, index) {
-        return ProfileEventCard(
-          event: attendingEvents[index],
-        );
+        return ProfileEventCard(event: attendingEvents[index]);
       },
     );
   }
@@ -245,10 +266,7 @@ class ProfilePageState extends State<ProfilePage> {
     return Center(
       child: Text(
         "You have no past events",
-        style: TextStyle(
-          color: Colors.grey[500],
-          fontSize: 16,
-        ),
+        style: TextStyle(color: Colors.grey[500], fontSize: 16),
       ),
     );
   }
@@ -258,21 +276,16 @@ class ProfilePageState extends State<ProfilePage> {
       return Center(
         child: Text(
           "You have no saved events",
-          style: TextStyle(
-            color: Colors.grey[500],
-            fontSize: 16,
-          ),
+          style: TextStyle(color: Colors.grey[500], fontSize: 16),
         ),
       );
     }
-    
+
     return ListView.builder(
       padding: EdgeInsets.symmetric(horizontal: 20),
       itemCount: savedEvents.length,
       itemBuilder: (context, index) {
-        return ProfileEventCard(
-          event: savedEvents[index],
-        );
+        return ProfileEventCard(event: savedEvents[index]);
       },
     );
   }

@@ -1,4 +1,3 @@
-import 'package:dio/dio.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../models/event.dart';
@@ -43,28 +42,22 @@ class UserService {
     await _apiClient.delete('/user/$userId');
   }
 
-  Future<void> submitEventProposal(Event event, List<XFile> images) async {
-    // Create FormData
-    FormData formData = FormData();
+Future<void> submitEventProposal(Event event, List<XFile> images) async {
+  try {
+    // Format event data according to EventRequestDTO structure
+    final eventData = {
+      'name': event.name,
+      'description': event.description,
+      'address': event.address,
+      'startDateTime': event.startDateTime.toIso8601String(),
+      'price': event.price.toString(),
+      'categories': event.categories
+    };
     
-    // Add text fields from the event object
-    final eventData = event.toJson();
-    for (var entry in eventData.entries) {
-      formData.fields.add(MapEntry(entry.key, entry.value.toString()));
-    }
-    
-    // Add image files
-  for (var image in images) {
-    formData.files.add(MapEntry(
-      'images',
-      await MultipartFile.fromFile(
-        image.path,
-        filename: image.name,
-      ),
-    ));
+    await _apiClient.postEventProposal('/user/submit-event', eventData, images);
+  } catch (e) {
+    print('Error submitting event: $e');
+    rethrow;
   }
-    
-    // Send request
-    await _apiClient.postFormData('/user/submit-event', formData, requiresAuth: false);
-  }
+}
 }

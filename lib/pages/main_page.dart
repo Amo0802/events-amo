@@ -9,14 +9,16 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 class MainPage extends StatefulWidget {
-  const MainPage({super.key});
+  final int initialTabIndex;
+  
+  const MainPage({super.key, this.initialTabIndex = 0});
 
   @override
   State<MainPage> createState() => _MainPageState();
 }
 
 class _MainPageState extends State<MainPage> {
-  int _currentIndex = 0;
+  late int _currentIndex;
   bool _isCreateMenuOpen = false;
 
   late final List<Widget> _pages;
@@ -24,6 +26,7 @@ class _MainPageState extends State<MainPage> {
   @override
   void initState() {
     super.initState();
+    _currentIndex = widget.initialTabIndex;
     _pages = [HomePage(), CommunityEventsPage(), ProfilePage()];
   }
 
@@ -76,7 +79,7 @@ class _MainPageState extends State<MainPage> {
             GestureDetector(
               onTap: _toggleCreateMenu,
               child: Container(
-                color: Colors.black.withValues(alpha: 0.7),
+                color: Colors.black.withOpacity(0.7),
                 child: Center(
                   child: CreateEventMenu(onClose: _toggleCreateMenu),
                 ),

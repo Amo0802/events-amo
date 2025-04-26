@@ -1,4 +1,4 @@
-import 'package:events_amo/pages/profile_page.dart';
+import 'package:events_amo/pages/main_page.dart';
 import 'package:events_amo/pages/register_page.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -46,43 +46,44 @@ class LoginPageState extends State<LoginPage> with SingleTickerProviderStateMixi
     super.dispose();
   }
 
-void _login() async {
-  if (_formKey.currentState!.validate()) {
-    setState(() {
-      _isLoading = true;
-    });
-
-    final authProvider = context.read<AuthProvider>(); // Access AuthProvider
-
-    // Perform the login using the AuthProvider's login method
-    bool success = await authProvider.login(
-      _emailController.text.trim(),
-      _passwordController.text,
-    );
-
-    if (mounted) { // Ensure the widget is still mounted before using the context
-      if (success) {
-        // Navigate to the Profile Page if login is successful
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => ProfilePage()), // Replace with your ProfilePage
-        );
-      } else {
-        // If login fails, show an error message
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Login failed: ${authProvider.error}'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-
+  void _login() async {
+    if (_formKey.currentState!.validate()) {
       setState(() {
-        _isLoading = false;
+        _isLoading = true;
       });
+
+      final authProvider = context.read<AuthProvider>(); // Access AuthProvider
+
+      // Perform the login using the AuthProvider's login method
+      bool success = await authProvider.login(
+        _emailController.text.trim(),
+        _passwordController.text,
+      );
+
+      if (mounted) { // Ensure the widget is still mounted before using the context
+        if (success) {
+          // Replace the current route with MainPage and set the index to profile tab (2)
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(
+              builder: (context) => MainPage(initialTabIndex: 2),
+            ),
+          );
+        } else {
+          // If login fails, show an error message
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Login failed: ${authProvider.error}'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
-}
 
   @override
   Widget build(BuildContext context) {
@@ -261,10 +262,10 @@ void _login() async {
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.1),
+        color: Colors.white.withOpacity(0.1),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: Colors.white.withValues(alpha: 0.2),
+          color: Colors.white.withOpacity(0.2),
           width: 1,
         ),
       ),
@@ -291,10 +292,10 @@ void _login() async {
   Widget _buildPasswordField() {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.1),
+        color: Colors.white.withOpacity(0.1),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: Colors.white.withValues(alpha: 0.2),
+          color: Colors.white.withOpacity(0.2),
           width: 1,
         ),
       ),

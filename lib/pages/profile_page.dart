@@ -1,38 +1,55 @@
 import 'package:events_amo/models/event.dart';
+import 'package:events_amo/providers/auth_provider.dart';
 import 'package:events_amo/providers/user_provider.dart';
 import 'package:events_amo/widgets/profile_event_card.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-class ProfilePage extends StatelessWidget {
+class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final user = Provider.of<UserProvider>(context);
+  ProfilePageState createState() => ProfilePageState();
+}
 
-    final dummyEvents = [
-      Event(
-        id: 1,
-        name: "Sample Music Festival",
-        imageUrl: "https://via.placeholder.com/400",
-        startDateTime: DateTime.now().add(Duration(days: 2)),
-        city: 'BERANE',
-        address: "29 novembra",
-        price: 50,
-        categories: ['ART'],
-        description: "A fun day of music and vibes.",
-      ),
-    ];
+class ProfilePageState extends State<ProfilePage> {
+  @override
+  void initState() {
+    super.initState();
+    // Fetch data when widget is initialized
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final userProvider = Provider.of<UserProvider>(context, listen: false);
+      userProvider.fetchSavedEvents();
+      userProvider.fetchAttendingEvents();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
-        body: CustomScrollView(
-          slivers: [
-            _buildAppBar(context),
-            _buildProfileHeader(context),
-            _buildStatsSection(context),
-            _buildTabSection(context, user.attendingEvents.isEmpty ? dummyEvents : user.attendingEvents, user.savedEvents.isEmpty ? dummyEvents : user.savedEvents),
-          ],
+        body: Consumer<UserProvider>(
+          builder: (context, userProvider, _) {
+            if (userProvider.isLoading) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            
+            final authProvider = Provider.of<AuthProvider>(context);
+            final user = authProvider.currentUser;
+            
+            return CustomScrollView(
+              slivers: [
+                _buildAppBar(context),
+                _buildProfileHeader(context, user?.name ?? "Guest", user?.lastName ?? "User", user?.email ?? "guest@example.com"),
+                _buildStatsSection(context, userProvider.attendingEvents.length, 0), // 0 for events created as we don't track this yet
+                _buildTabSection(
+                  context, 
+                  userProvider.attendingEvents.isEmpty ? [] : userProvider.attendingEvents, 
+                  userProvider.savedEvents.isEmpty ? [] : userProvider.savedEvents
+                ),
+              ],
+            );
+          },
         ),
       ),
     );
@@ -65,7 +82,7 @@ class ProfilePage extends StatelessWidget {
     );
   }
 
-  Widget _buildProfileHeader(BuildContext context) {
+  Widget _buildProfileHeader(BuildContext context, String firstName, String lastName, String email) {
     return SliverToBoxAdapter(
       child: Container(
         padding: EdgeInsets.all(20),
@@ -77,7 +94,7 @@ class ProfilePage extends StatelessWidget {
             ),
             SizedBox(height: 16),
             Text(
-              "Alex Johnson",
+              "$firstName $lastName",
               style: TextStyle(
                 fontSize: 26,
                 fontWeight: FontWeight.bold,
@@ -85,7 +102,7 @@ class ProfilePage extends StatelessWidget {
             ),
             SizedBox(height: 8),
             Text(
-              "Event Enthusiast • Joined Dec 2024",
+              email,
               style: TextStyle(
                 fontSize: 16,
                 color: Colors.grey[400],
@@ -116,7 +133,7 @@ class ProfilePage extends StatelessWidget {
     );
   }
 
-  Widget _buildStatsSection(BuildContext context) {
+  Widget _buildStatsSection(BuildContext context, int attendedCount, int createdCount) {
     return SliverToBoxAdapter(
       child: Container(
         padding: EdgeInsets.symmetric(vertical: 10),
@@ -132,9 +149,9 @@ class ProfilePage extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
-            _buildStat(context, "Events\nAttended", "18"),
-            _buildStat(context, "Events\nCreated", "5"),
-            _buildStat(context, "Friends", "34"),
+            _buildStat(context, "Events\nAttended", attendedCount.toString()),
+            _buildStat(context, "Events\nCreated", createdCount.toString()),
+            _buildStat(context, "Friends", "0"), // Placeholder for future feature
           ],
         ),
       ),
@@ -189,7 +206,7 @@ class ProfilePage extends StatelessWidget {
               child: TabBarView(
                 children: [
                   _buildUpcomingEvents(context, attendingEvents),
-                  _buildPastEvents(context, attendingEvents),
+                  _buildPastEvents(context),
                   _buildSavedEvents(context, savedEvents),
                 ],
               ),
@@ -201,9 +218,21 @@ class ProfilePage extends StatelessWidget {
   }
 
   Widget _buildUpcomingEvents(BuildContext context, List<Event> attendingEvents) {
+    if (attendingEvents.isEmpty) {
+      return Center(
+        child: Text(
+          "You have no upcoming events",
+          style: TextStyle(
+            color: Colors.grey[500],
+            fontSize: 16,
+          ),
+        ),
+      );
+    }
+    
     return ListView.builder(
       padding: EdgeInsets.symmetric(horizontal: 20),
-      itemCount: 1,
+      itemCount: attendingEvents.length,
       itemBuilder: (context, index) {
         return ProfileEventCard(
           event: attendingEvents[index],
@@ -212,7 +241,7 @@ class ProfilePage extends StatelessWidget {
     );
   }
 
-  Widget _buildPastEvents(BuildContext context, List<Event> attendingEvents) {
+  Widget _buildPastEvents(BuildContext context) {
     return Center(
       child: Text(
         "You have no past events",
@@ -225,9 +254,21 @@ class ProfilePage extends StatelessWidget {
   }
 
   Widget _buildSavedEvents(BuildContext context, List<Event> savedEvents) {
+    if (savedEvents.isEmpty) {
+      return Center(
+        child: Text(
+          "You have no saved events",
+          style: TextStyle(
+            color: Colors.grey[500],
+            fontSize: 16,
+          ),
+        ),
+      );
+    }
+    
     return ListView.builder(
       padding: EdgeInsets.symmetric(horizontal: 20),
-      itemCount: 1,
+      itemCount: savedEvents.length,
       itemBuilder: (context, index) {
         return ProfileEventCard(
           event: savedEvents[index],

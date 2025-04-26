@@ -6,45 +6,50 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
   @override
+  HomePageState createState() => HomePageState();
+}
+
+class HomePageState extends State<HomePage> {
+  @override
+  void initState() {
+    super.initState();
+    // Fetch data when widget is initialized
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final provider = Provider.of<EventProvider>(context, listen: false);
+      provider.fetchPromotedEvents();
+      provider.fetchMainEvents();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final provider = Provider.of<EventProvider>(context);
-
-    final dummyEvents = [
-      Event(
-        id: 1,
-        name: "Sample Music Festival",
-        imageUrl: "https://via.placeholder.com/400",
-        startDateTime: DateTime.now().add(Duration(days: 2)),
-        city: 'BERANE',
-        address: "29 novembra",
-        price: 50,
-        categories: ['ART'],
-        description: "A fun day of music and vibes.",
-      ),
-    ];
-
     return SafeArea(
       child: Scaffold(
-        body:
-            provider.isLoading
-                ? Center(child: CircularProgressIndicator())
-                : CustomScrollView(
-                  slivers: [
-                    _buildAppBar(context),
-                    _buildPromotedEvents(
-                      context,
-                      provider.promotedEvents?.content ?? dummyEvents,
-                    ),
-                    _buildUpcomingEvents(
-                      context,
-                      provider.mainEvents?.content ?? dummyEvents,
-                    ),
-                  ],
+        body: Consumer<EventProvider>(
+          builder: (context, provider, _) {
+            if (provider.isLoading) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            
+            return CustomScrollView(
+              slivers: [
+                _buildAppBar(context),
+                _buildPromotedEvents(
+                  context,
+                  provider.promotedEvents?.content ?? [],
                 ),
+                _buildUpcomingEvents(
+                  context,
+                  provider.mainEvents?.content ?? [],
+                ),
+              ],
+            );
+          },
+        ),
       ),
     );
   }

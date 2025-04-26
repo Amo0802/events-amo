@@ -15,7 +15,11 @@ class EventProvider with ChangeNotifier {
   PageResponse<Event>? _searchResults;
   Event? _selectedEvent;
   
-  EventProvider(this._eventService);
+  EventProvider(this._eventService) {
+    // Initialize data loading when provider is created
+    fetchMainEvents();
+    fetchPromotedEvents();
+  }
   
   bool get isLoading => _isLoading;
   String? get error => _error;
@@ -39,6 +43,7 @@ class EventProvider with ChangeNotifier {
     } catch (e) {
       _isLoading = false;
       _error = e.toString();
+      print('Error fetching events: $_error');
       notifyListeners();
     }
   }
@@ -56,6 +61,7 @@ class EventProvider with ChangeNotifier {
     } catch (e) {
       _isLoading = false;
       _error = e.toString();
+      print('Error fetching main events: $_error');
       notifyListeners();
     }
   }
@@ -73,6 +79,7 @@ class EventProvider with ChangeNotifier {
     } catch (e) {
       _isLoading = false;
       _error = e.toString();
+      print('Error fetching promoted events: $_error');
       notifyListeners();
     }
   }
@@ -91,6 +98,7 @@ class EventProvider with ChangeNotifier {
     } catch (e) {
       _isLoading = false;
       _error = e.toString();
+      print('Error fetching filtered events: $_error');
       notifyListeners();
     }
   }
@@ -114,6 +122,7 @@ class EventProvider with ChangeNotifier {
     } catch (e) {
       _isLoading = false;
       _error = e.toString();
+      print('Error searching events: $_error');
       notifyListeners();
     }
   }
@@ -131,6 +140,7 @@ class EventProvider with ChangeNotifier {
     } catch (e) {
       _isLoading = false;
       _error = e.toString();
+      print('Error fetching event by ID: $_error');
       notifyListeners();
     }
   }
@@ -149,6 +159,7 @@ class EventProvider with ChangeNotifier {
     } catch (e) {
       _isLoading = false;
       _error = e.toString();
+      print('Error creating event: $_error');
       notifyListeners();
       return false;
     }
@@ -168,6 +179,7 @@ class EventProvider with ChangeNotifier {
     } catch (e) {
       _isLoading = false;
       _error = e.toString();
+      print('Error updating event: $_error');
       notifyListeners();
       return false;
     }
@@ -187,6 +199,7 @@ class EventProvider with ChangeNotifier {
     } catch (e) {
       _isLoading = false;
       _error = e.toString();
+      print('Error deleting event: $_error');
       notifyListeners();
       return false;
     }
@@ -206,6 +219,7 @@ class EventProvider with ChangeNotifier {
     } catch (e) {
       _isLoading = false;
       _error = e.toString();
+      print('Error submitting event proposal: $_error');
       notifyListeners();
       return false;
     }
@@ -233,5 +247,24 @@ class EventProvider with ChangeNotifier {
     if (hasUpdated) {
       notifyListeners();
     }
+  }
+  
+  // Helper method to clear errors
+  void clearError() {
+    _error = null;
+    notifyListeners();
+  }
+  
+  // Reset method for testing
+  void reset() {
+    _isLoading = false;
+    _error = null;
+    _events = null;
+    _mainEvents = null;
+    _promotedEvents = null;
+    _filteredEvents = null;
+    _searchResults = null;
+    _selectedEvent = null;
+    notifyListeners();
   }
 }

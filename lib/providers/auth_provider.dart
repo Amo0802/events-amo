@@ -40,6 +40,7 @@ class AuthProvider with ChangeNotifier {
     } catch (e) {
       _status = AuthStatus.unauthenticated;
       _error = e.toString();
+      print('Error checking auth status: $_error');
     }
     
     notifyListeners();
@@ -48,6 +49,8 @@ class AuthProvider with ChangeNotifier {
   Future<bool> register(String name, String lastName, String email, String password) async {
     try {
       _error = null;
+      _status = AuthStatus.initial;
+      notifyListeners();
       
       final request = RegisterRequest(
         name: name,
@@ -64,6 +67,8 @@ class AuthProvider with ChangeNotifier {
       return true;
     } catch (e) {
       _error = e.toString();
+      _status = AuthStatus.unauthenticated;
+      print('Error during registration: $_error');
       notifyListeners();
       return false;
     }
@@ -72,6 +77,8 @@ class AuthProvider with ChangeNotifier {
   Future<bool> login(String email, String password) async {
     try {
       _error = null;
+      _status = AuthStatus.initial;
+      notifyListeners();
       
       final request = AuthRequest(
         email: email,
@@ -86,15 +93,24 @@ class AuthProvider with ChangeNotifier {
       return true;
     } catch (e) {
       _error = e.toString();
+      _status = AuthStatus.unauthenticated;
+      print('Error during login: $_error');
       notifyListeners();
       return false;
     }
   }
   
   Future<void> logout() async {
-    await _authService.logout();
-    _currentUser = null;
-    _status = AuthStatus.unauthenticated;
+    try {
+      await _authService.logout();
+      _currentUser = null;
+      _status = AuthStatus.unauthenticated;
+    } catch (e) {
+      _error = e.toString();
+      print('Error during logout: $_error');
+      // Still set to unauthenticated even if there's an error
+      _status = AuthStatus.unauthenticated;
+    }
     notifyListeners();
   }
   
@@ -104,7 +120,14 @@ class AuthProvider with ChangeNotifier {
       notifyListeners();
     } catch (e) {
       _error = e.toString();
+      print('Error refreshing user: $_error');
       notifyListeners();
     }
+  }
+  
+  // Add a method to clear errors
+  void clearError() {
+    _error = null;
+    notifyListeners();
   }
 }

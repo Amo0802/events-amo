@@ -44,4 +44,5 @@ class AuthService {
     final json = await _apiClient.get('/user/current');
     return User.fromJson(json);
   }
+
 }

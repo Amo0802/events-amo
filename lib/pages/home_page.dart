@@ -1,51 +1,50 @@
-// Home Page - Official Events
+import 'package:events_amo/models/event.dart';
+import 'package:events_amo/providers/event_provider.dart';
 import 'package:events_amo/widgets/featured_event_card.dart';
 import 'package:events_amo/widgets/standard_event_card.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:carousel_slider/carousel_slider.dart';
 
 class HomePage extends StatelessWidget {
-  final List<Map<String, dynamic>> featuredEvents = [
-    {
-      'title': 'Tech Summit 2025',
-      'image': 'https://images.unsplash.com/photo-1505373877841-8d25f7d46678?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80',
-      'date': DateTime(2025, 5, 15),
-      'location': 'Digital Conference Center',
-      'isPromoted': true,
-    },
-    {
-      'title': 'Annual Music Festival',
-      'image': 'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80',
-      'date': DateTime(2025, 6, 20),
-      'location': 'City Park',
-      'isPromoted': true,
-    },
-    {
-      'title': 'Art Exhibition Opening',
-      'image': 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80',
-      'date': DateTime(2025, 5, 5),
-      'location': 'Modern Art Gallery',
-      'isPromoted': false,
-    },
-    {
-      'title': 'Startup Weekend',
-      'image': 'https://images.unsplash.com/photo-1543269865-cbf427effbad?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80',
-      'date': DateTime(2025, 5, 10),
-      'location': 'Innovation Hub',
-      'isPromoted': false,
-    },
-  ];
+  const HomePage({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final provider = Provider.of<EventProvider>(context);
+
+    final dummyEvents = [
+      Event(
+        id: 1,
+        name: "Sample Music Festival",
+        imageUrl: "https://via.placeholder.com/400",
+        startDateTime: DateTime.now().add(Duration(days: 2)),
+        city: 'BERANE',
+        address: "29 novembra",
+        price: 50,
+        categories: ['ART'],
+        description: "A fun day of music and vibes.",
+      ),
+    ];
+
     return SafeArea(
       child: Scaffold(
-        body: CustomScrollView(
-          slivers: [
-            _buildAppBar(context),
-            _buildPromotedEvents(context),
-            _buildUpcomingEvents(context),
-          ],
-        ),
+        body:
+            provider.isLoading
+                ? Center(child: CircularProgressIndicator())
+                : CustomScrollView(
+                  slivers: [
+                    _buildAppBar(context),
+                    _buildPromotedEvents(
+                      context,
+                      provider.promotedEvents?.content ?? dummyEvents,
+                    ),
+                    _buildUpcomingEvents(
+                      context,
+                      provider.mainEvents?.content ?? dummyEvents,
+                    ),
+                  ],
+                ),
       ),
     );
   }
@@ -90,9 +89,14 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  Widget _buildPromotedEvents(BuildContext context) {
-    final promotedEvents = featuredEvents.where((event) => event['isPromoted']).toList();
-    
+  Widget _buildPromotedEvents(
+    BuildContext context,
+    List<Event> promotedEvents,
+  ) {
+    if (promotedEvents.isEmpty) {
+      return SliverToBoxAdapter(child: SizedBox.shrink());
+    }
+
     return SliverToBoxAdapter(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -101,38 +105,28 @@ class HomePage extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
             child: Row(
               children: [
-                Icon(
-                  Icons.star,
-                  color: Colors.amber,
-                  size: 24,
-                ),
+                Icon(Icons.star, color: Colors.amber),
                 SizedBox(width: 8),
                 Text(
                   "Promoted Events",
-                  style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: Theme.of(context).textTheme.titleLarge,
                 ),
               ],
             ),
           ),
-          SizedBox(
-            height: 320,
-            child: ListView.builder(
-              padding: EdgeInsets.symmetric(horizontal: 12),
-              scrollDirection: Axis.horizontal,
-              itemCount: promotedEvents.length,
-              itemBuilder: (context, index) {
-                final event = promotedEvents[index];
-                return FeaturedEventCard(
-                  title: event['title'],
-                  imageUrl: event['image'],
-                  date: event['date'],
-                  location: event['location'],
-                  isPromoted: true,
-                );
-              },
+          CarouselSlider.builder(
+            itemCount: promotedEvents.length,
+            itemBuilder: (context, index, _) {
+              final event = promotedEvents[index];
+              return FeaturedEventCard(
+                event: event,
+              );
+            },
+            options: CarouselOptions(
+              height: 320,
+              enlargeCenterPage: true,
+              autoPlay: true,
+              viewportFraction: 0.85,
             ),
           ),
         ],
@@ -140,48 +134,34 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  Widget _buildUpcomingEvents(BuildContext context) {
-    final standardEvents = featuredEvents.where((event) => !event['isPromoted']).toList();
-    
+  Widget _buildUpcomingEvents(BuildContext context, List<Event> events) {
+    if (events.isEmpty) return SliverToBoxAdapter(child: SizedBox.shrink());
+
     return SliverList(
-      delegate: SliverChildBuilderDelegate(
-        (BuildContext context, int index) {
-          if (index == 0) {
-            return Padding(
-              padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.event_available,
-                    color: Theme.of(context).colorScheme.secondary,
-                    size: 24,
-                  ),
-                  SizedBox(width: 8),
-                  Text(
-                    "Upcoming Official Events",
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-            );
-          }
-          final eventIndex = index - 1;
-          if (eventIndex < standardEvents.length) {
-            final event = standardEvents[eventIndex];
-            return StandardEventCard(
-              title: event['title'],
-              imageUrl: event['image'],
-              date: event['date'],
-              location: event['location'],
-            );
-          }
-          return null;
-        },
-        childCount: standardEvents.length + 1,
-      ),
+      delegate: SliverChildBuilderDelegate((BuildContext context, int index) {
+        if (index == 0) {
+          return Padding(
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.event_available,
+                  color: Theme.of(context).colorScheme.secondary,
+                ),
+                SizedBox(width: 8),
+                Text(
+                  "Upcoming Official Events",
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+              ],
+            ),
+          );
+        }
+        final event = events[index - 1];
+        return StandardEventCard(
+          event: event,
+        );
+      }, childCount: events.length + 1),
     );
   }
 }

@@ -11,7 +11,7 @@ class EventProvider with ChangeNotifier {
   PageResponse<Event>? _events;
   PageResponse<Event>? _mainEvents;
   PageResponse<Event>? _promotedEvents;
-  Map<String, PageResponse<Event>> _eventsByCategory = {};
+  PageResponse<Event>? _filteredEvents;
   PageResponse<Event>? _searchResults;
   Event? _selectedEvent;
   
@@ -22,6 +22,7 @@ class EventProvider with ChangeNotifier {
   PageResponse<Event>? get events => _events;
   PageResponse<Event>? get mainEvents => _mainEvents;
   PageResponse<Event>? get promotedEvents => _promotedEvents;
+  PageResponse<Event>? get filteredEvents => _filteredEvents;
   PageResponse<Event>? get searchResults => _searchResults;
   Event? get selectedEvent => _selectedEvent;
   
@@ -76,14 +77,14 @@ class EventProvider with ChangeNotifier {
     }
   }
   
-  Future<void> fetchEventsByCategory(String category, {int page = 0, int size = 10}) async {
+  Future<void> fetchFilteredEvents(String city, String category, {int page = 0, int size = 10}) async {
     try {
       _isLoading = true;
       _error = null;
       notifyListeners();
       
-      final result = await _eventService.getEventsByCategory(category, page: page, size: size);
-      _eventsByCategory[category] = result;
+      final result = await _eventService.getFilteredEvents(city, category, page: page, size: size);
+      _filteredEvents = result;
       
       _isLoading = false;
       notifyListeners();
@@ -209,8 +210,28 @@ class EventProvider with ChangeNotifier {
       return false;
     }
   }
-  
-  PageResponse<Event>? getEventsByCategory(String category) {
-    return _eventsByCategory[category];
+
+  void patchLocalEvent(Event updatedEvent) {
+    bool hasUpdated = false;
+
+    void updateEventInList(PageResponse<Event>? page) {
+      if (page == null) return;
+
+      final index = page.content.indexWhere((e) => e.id == updatedEvent.id);
+      if (index != -1) {
+        page.content[index] = updatedEvent;
+        hasUpdated = true;
+      }
+    }
+
+    updateEventInList(_events);
+    updateEventInList(_mainEvents);
+    updateEventInList(_promotedEvents);
+    updateEventInList(_filteredEvents);
+    updateEventInList(_searchResults);
+
+    if (hasUpdated) {
+      notifyListeners();
+    }
   }
 }

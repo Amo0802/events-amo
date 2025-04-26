@@ -1,20 +1,12 @@
-import "package:events_amo/detaljanDogadjaj/events_detail_page.dart";
+import "package:events_amo/models/event.dart";
+import "package:events_amo/pages/events_detail_page.dart";
 import "package:flutter/material.dart";
 import "package:intl/intl.dart";
 
 class ProfileEventCard extends StatelessWidget {
-  final String title;
-  final DateTime date;
-  final String location;
-  final String imageUrl;
+  final Event event;
 
-  const ProfileEventCard({
-    Key? key,
-    required this.title,
-    required this.date,
-    required this.location,
-    required this.imageUrl,
-  }) : super(key: key);
+  const ProfileEventCard({super.key, required this.event});
 
   @override
   Widget build(BuildContext context) {
@@ -27,20 +19,11 @@ class ProfileEventCard extends StatelessWidget {
       child: InkWell(
         onTap: () {
           Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder:
-              (context) => EventDetailPage(
-                eventData: {
-                  'title': title,
-                  'image': imageUrl,
-                  'date': date,
-                  'location': location,
-                },
-                isOfficial: false,
-              ),
-        ),
-      );
+            context,
+            MaterialPageRoute(
+              builder: (context) => EventDetailPage(event: event),
+            ),
+          );
         },
         borderRadius: BorderRadius.circular(15),
         child: Row(
@@ -52,7 +35,7 @@ class ProfileEventCard extends StatelessWidget {
                 bottomLeft: Radius.circular(15),
               ),
               child: Image.network(
-                imageUrl,
+                event.imageUrl,
                 width: 80,
                 height: 80,
                 fit: BoxFit.cover,
@@ -66,7 +49,7 @@ class ProfileEventCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      title,
+                      event.name,
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -84,7 +67,7 @@ class ProfileEventCard extends StatelessWidget {
                         ),
                         SizedBox(width: 4),
                         Text(
-                          DateFormat('E, MMM d').format(date),
+                          DateFormat('E, MMM d').format(event.startDateTime),
                           style: TextStyle(
                             color: Colors.grey[400],
                             fontSize: 12,
@@ -103,7 +86,7 @@ class ProfileEventCard extends StatelessWidget {
                         SizedBox(width: 4),
                         Expanded(
                           child: Text(
-                            location,
+                            event.location,
                             style: TextStyle(
                               color: Colors.grey[400],
                               fontSize: 12,

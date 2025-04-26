@@ -1,65 +1,64 @@
-import 'package:events_amo/detaljanDogadjaj/events_detail_page.dart';
+import 'package:events_amo/models/event.dart';
+import 'package:events_amo/pages/events_detail_page.dart';
+import 'package:events_amo/providers/event_provider.dart';
+import 'package:events_amo/providers/user_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 
-class CommunityEventCard extends StatelessWidget {
-  final String title;
-  final String imageUrl;
-  final DateTime date;
-  final String location;
-  final String organizer;
-  final int attendees;
-  final String category;
+class CommunityEventCard extends StatefulWidget {
+  final Event event;
 
-  const CommunityEventCard({
-    Key? key,
-    required this.title,
-    required this.imageUrl,
-    required this.date,
-    required this.location,
-    required this.organizer,
-    required this.attendees,
-    required this.category,
-  }) : super(key: key);
+  const CommunityEventCard({super.key, required this.event});
+
+  @override
+  State<CommunityEventCard> createState() => _CommunityEventCardState();
+}
+
+class _CommunityEventCardState extends State<CommunityEventCard> {
+  late bool isAttending;
+  late bool isSaved;
+  bool _isProcessing = false;
+
+  @override
+  void initState() {
+    super.initState();
+    isAttending = widget.event.eventAttending;
+    isSaved = widget.event.eventSaved;
+  }
 
   @override
   Widget build(BuildContext context) {
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    final eventProvider = context.read<EventProvider>();
     return GestureDetector(
       onTap: () {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder:
-                (context) => EventDetailPage(
-                  eventData: {
-                    'title': title,
-                    'image': imageUrl,
-                    'date': date,
-                    'location': location,
-                    'organizer': organizer,
-                    'attendees': attendees,
-                    'category': category,
-                  },
-                  isOfficial: false,
-                ),
+            builder: (context) => EventDetailPage(event: widget.event),
           ),
-        );
+        ).then((updatedEvent) {
+          // Refresh event status if needed
+          if (updatedEvent != null && updatedEvent is Event) {
+            eventProvider.patchLocalEvent(
+              updatedEvent,
+            ); // <-- only update that one
+          }
+        });
       },
       child: Container(
         margin: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20),
           gradient: LinearGradient(
-            colors: [
-              Color(0xFF1F2533),
-              Color(0xFF131824),
-            ],
+            colors: [Color(0xFF1F2533), Color(0xFF131824)],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.2),
+              color: Colors.black.withValues(alpha: 0.2),
               blurRadius: 8,
               offset: Offset(0, 3),
             ),
@@ -77,7 +76,7 @@ class CommunityEventCard extends StatelessWidget {
                     topRight: Radius.circular(20),
                   ),
                   child: Image.network(
-                    imageUrl,
+                    widget.event.imageUrl,
                     height: 150,
                     width: double.infinity,
                     fit: BoxFit.cover,
@@ -94,7 +93,7 @@ class CommunityEventCard extends StatelessWidget {
                       gradient: LinearGradient(
                         colors: [
                           Colors.transparent,
-                          Colors.black.withOpacity(0.7),
+                          Colors.black.withValues(alpha: 0.7),
                         ],
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
@@ -109,11 +108,14 @@ class CommunityEventCard extends StatelessWidget {
                   child: Container(
                     padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
-                      color: _getCategoryColor(category, context),
+                      color: _getCategoryColor(
+                        widget.event.categoryLabels,
+                        context,
+                      ),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
-                      category.toUpperCase(),
+                      widget.event.categoryLabels.toUpperCase(),
                       style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
@@ -129,7 +131,9 @@ class CommunityEventCard extends StatelessWidget {
                   child: Container(
                     padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.tertiary.withOpacity(0.8),
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.tertiary.withValues(alpha: 0.8),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Row(
@@ -141,7 +145,9 @@ class CommunityEventCard extends StatelessWidget {
                         ),
                         SizedBox(width: 4),
                         Text(
-                          DateFormat('MMM d').format(date),
+                          DateFormat(
+                            'MMM d',
+                          ).format(widget.event.startDateTime),
                           style: TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
@@ -161,11 +167,8 @@ class CommunityEventCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    title,
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    widget.event.name,
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   SizedBox(height: 8),
                   Row(
@@ -177,74 +180,117 @@ class CommunityEventCard extends StatelessWidget {
                       ),
                       SizedBox(width: 4),
                       Text(
-                        location,
-                        style: TextStyle(
-                          color: Colors.grey[400],
-                          fontSize: 14,
-                        ),
+                        widget.event.location,
+                        style: TextStyle(color: Colors.grey[400], fontSize: 14),
                       ),
                     ],
                   ),
-                  SizedBox(height: 6),
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.person_outline,
-                        color: Theme.of(context).colorScheme.secondary,
-                        size: 16,
-                      ),
-                      SizedBox(width: 4),
-                      Text(
-                        "By $organizer",
-                        style: TextStyle(
-                          color: Colors.grey[400],
-                          fontSize: 14,
-                        ),
-                      ),
-                      Spacer(),
-                      Icon(
-                        Icons.people_outline,
-                        color: Theme.of(context).colorScheme.secondary,
-                        size: 16,
-                      ),
-                      SizedBox(width: 4),
-                      Text(
-                        "$attendees attending",
-                        style: TextStyle(
-                          color: Colors.grey[400],
-                          fontSize: 14,
-                        ),
-                      ),
-                    ],
-                  ),
+                  // SizedBox(height: 6),
+                  // Row(
+                  //   children: [
+                  //     Icon(
+                  //       Icons.person_outline,
+                  //       color: Theme.of(context).colorScheme.secondary,
+                  //       size: 16,
+                  //     ),
+                  //     SizedBox(width: 4),
+                  //     Text(
+                  //       "By $organizer",
+                  //       style: TextStyle(
+                  //         color: Colors.grey[400],
+                  //         fontSize: 14,
+                  //       ),
+                  //     ),
+                  // Spacer(),
+                  // Icon(
+                  //   Icons.people_outline,
+                  //   color: Theme.of(context).colorScheme.secondary,
+                  //   size: 16,
+                  // ),
+                  // SizedBox(width: 4),
+                  // Text(
+                  //   "$attendees attending",
+                  //   style: TextStyle(
+                  //     color: Colors.grey[400],
+                  //     fontSize: 14,
+                  //   ),
+                  // ),
+                  //   ],
+                  // ),
                   SizedBox(height: 15),
                   Row(
                     children: [
                       Expanded(
                         child: ElevatedButton(
-                          onPressed: () {
-                            // RSVP to event
-                          },
-                          child: Text("Join"),
+                          onPressed:
+                              _isProcessing
+                                  ? null
+                                  : () async {
+                                    setState(() {
+                                      _isProcessing = true;
+                                    });
+
+                                    bool success = await userProvider
+                                        .toggleAttendEvent(
+                                          widget.event.id,
+                                          isAttending,
+                                        );
+
+                                    if (success) {
+                                      setState(() {
+                                        isAttending = !isAttending;
+                                      });
+                                    }
+
+                                    setState(() {
+                                      _isProcessing = false;
+                                    });
+                                  },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Theme.of(context).colorScheme.secondary,
+                            backgroundColor:
+                                Theme.of(context).colorScheme.secondary,
                             foregroundColor: Colors.white,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10),
                             ),
                             padding: EdgeInsets.symmetric(vertical: 10),
                           ),
+                          child: Text("Attend"),
                         ),
                       ),
                       SizedBox(width: 10),
                       IconButton(
                         icon: Icon(
-                          Icons.bookmark_border,
-                          color: Colors.grey[400],
+                          isSaved ? Icons.bookmark : Icons.bookmark_border,
+                          color:
+                              isSaved
+                                  ? Theme.of(context).colorScheme.tertiary
+                                  : Colors.grey[400],
                         ),
-                        onPressed: () {
-                          // Save event
-                        },
+                        onPressed:
+                            _isProcessing
+                                ? null
+                                : () async {
+                                  setState(() {
+                                    _isProcessing = true;
+                                  });
+
+                                  bool success = await userProvider
+                                      .toggleSaveEvent(
+                                        widget.event.id,
+                                        isSaved,
+                                      );
+
+                                  if (success) {
+                                    setState(() {
+                                      isSaved = !isSaved;
+                                    });
+                                  }
+
+                                  setState(() {
+                                    _isProcessing = false;
+                                  });
+                                },
                       ),
                     ],
                   ),

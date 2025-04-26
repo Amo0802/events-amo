@@ -1,12 +1,40 @@
 import 'package:events_amo/pages/main_page.dart';
+import 'package:events_amo/providers/auth_provider.dart';
+import 'package:events_amo/providers/event_provider.dart';
+import 'package:events_amo/providers/user_provider.dart';
+import 'package:events_amo/services/api_client.dart';
+import 'package:events_amo/services/auth_service.dart';
+import 'package:events_amo/services/event_service.dart';
+import 'package:events_amo/services/user_service.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 
-void main() {
-  runApp(EventsApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: ".env");
+
+  final apiClient = ApiClient();
+  final authService = AuthService(apiClient);
+  final eventService = EventService(apiClient);
+  final userService = UserService(apiClient);
+
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => AuthProvider(authService)),
+        ChangeNotifierProvider(create: (_) => EventProvider(eventService)),
+        ChangeNotifierProvider(create: (_) => UserProvider(userService)),
+      ],
+      child: EventsApp(),
+    ),
+  );
 }
 
 class EventsApp extends StatelessWidget {
+  const EventsApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -17,16 +45,16 @@ class EventsApp extends StatelessWidget {
         scaffoldBackgroundColor: Color(0xFF0A0E21),
         textTheme: GoogleFonts.montserratTextTheme(
           Theme.of(context).textTheme.apply(
-                bodyColor: Colors.white,
-                displayColor: Colors.white,
-              ),
+            bodyColor: Colors.white,
+            displayColor: Colors.white,
+          ),
         ),
         colorScheme: ColorScheme.dark(
           primary: Color(0xFF6200EA),
           secondary: Color(0xFF00E5FF),
           tertiary: Color(0xFFFF00E5),
-          background: Color(0xFF0A0E21),
-          onBackground: Colors.white,
+          surface: Color(0xFF0A0E21),
+          onSurface: Colors.white,
         ),
       ),
       home: MainPage(),

@@ -1,10 +1,10 @@
-import 'package:events_amo/createEvent/create_events.dart';
+import 'package:events_amo/pages/create_events.dart';
 import 'package:flutter/material.dart';
 
 class CreateEventMenu extends StatelessWidget {
   final Function onClose;
 
-  const CreateEventMenu({Key? key, required this.onClose}) : super(key: key);
+  const CreateEventMenu({super.key, required this.onClose});
 
   @override
   Widget build(BuildContext context) {
@@ -71,11 +71,11 @@ class CreateEventMenu extends StatelessWidget {
         padding: EdgeInsets.symmetric(vertical: 15, horizontal: 20),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(15),
-          border: Border.all(color: color.withOpacity(0.5), width: 2),
+          border: Border.all(color: color.withValues(alpha: 0.5), width: 2),
           gradient: LinearGradient(
             colors: [
-              color.withOpacity(0.2),
-              color.withOpacity(0.05),
+              color.withValues(alpha: 0.2),
+              color.withValues(alpha: 0.05),
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,

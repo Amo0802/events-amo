@@ -1,9 +1,29 @@
+import 'package:events_amo/models/event.dart';
+import 'package:events_amo/providers/user_provider.dart';
 import 'package:events_amo/widgets/profile_event_card.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 class ProfilePage extends StatelessWidget {
+  const ProfilePage({super.key});
+
   @override
   Widget build(BuildContext context) {
+    final user = Provider.of<UserProvider>(context);
+
+    final dummyEvents = [
+      Event(
+        id: 1,
+        name: "Sample Music Festival",
+        imageUrl: "https://via.placeholder.com/400",
+        startDateTime: DateTime.now().add(Duration(days: 2)),
+        city: 'BERANE',
+        address: "29 novembra",
+        price: 50,
+        categories: ['ART'],
+        description: "A fun day of music and vibes.",
+      ),
+    ];
     return SafeArea(
       child: Scaffold(
         body: CustomScrollView(
@@ -11,7 +31,7 @@ class ProfilePage extends StatelessWidget {
             _buildAppBar(context),
             _buildProfileHeader(context),
             _buildStatsSection(context),
-            _buildTabSection(context),
+            _buildTabSection(context, user.attendingEvents.isEmpty ? dummyEvents : user.attendingEvents, user.savedEvents.isEmpty ? dummyEvents : user.savedEvents),
           ],
         ),
       ),
@@ -76,9 +96,8 @@ class ProfilePage extends StatelessWidget {
               onPressed: () {
                 // Edit profile
               },
-              child: Text("Edit Profile"),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Theme.of(context).colorScheme.secondary.withOpacity(0.2),
+                backgroundColor: Theme.of(context).colorScheme.secondary.withValues(alpha: 0.2),
                 foregroundColor: Theme.of(context).colorScheme.secondary,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(30),
@@ -89,6 +108,7 @@ class ProfilePage extends StatelessWidget {
                 ),
                 padding: EdgeInsets.symmetric(horizontal: 30, vertical: 12),
               ),
+              child: Text("Edit Profile"),
             ),
           ],
         ),
@@ -103,9 +123,9 @@ class ProfilePage extends StatelessWidget {
         margin: EdgeInsets.symmetric(horizontal: 20),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(15),
-          color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+          color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
           border: Border.all(
-            color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
             width: 1.5,
           ),
         ),
@@ -145,7 +165,7 @@ class ProfilePage extends StatelessWidget {
     );
   }
 
-  Widget _buildTabSection(BuildContext context) {
+  Widget _buildTabSection(BuildContext context, List<Event> attendingEvents, List<Event> savedEvents) {
     return SliverToBoxAdapter(
       child: DefaultTabController(
         length: 3,
@@ -168,9 +188,9 @@ class ProfilePage extends StatelessWidget {
               padding: EdgeInsets.only(top: 20),
               child: TabBarView(
                 children: [
-                  _buildUpcomingEvents(context),
-                  _buildPastEvents(context),
-                  _buildSavedEvents(context),
+                  _buildUpcomingEvents(context, attendingEvents),
+                  _buildPastEvents(context, attendingEvents),
+                  _buildSavedEvents(context, savedEvents),
                 ],
               ),
             ),
@@ -180,22 +200,19 @@ class ProfilePage extends StatelessWidget {
     );
   }
 
-  Widget _buildUpcomingEvents(BuildContext context) {
+  Widget _buildUpcomingEvents(BuildContext context, List<Event> attendingEvents) {
     return ListView.builder(
       padding: EdgeInsets.symmetric(horizontal: 20),
-      itemCount: 3,
+      itemCount: 1,
       itemBuilder: (context, index) {
         return ProfileEventCard(
-          title: "Board Games Night",
-          date: DateTime(2025, 4, 22),
-          location: "The Game Café",
-          imageUrl: "https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
+          event: attendingEvents[index],
         );
       },
     );
   }
 
-  Widget _buildPastEvents(BuildContext context) {
+  Widget _buildPastEvents(BuildContext context, List<Event> attendingEvents) {
     return Center(
       child: Text(
         "You have no past events",
@@ -207,16 +224,13 @@ class ProfilePage extends StatelessWidget {
     );
   }
 
-  Widget _buildSavedEvents(BuildContext context) {
+  Widget _buildSavedEvents(BuildContext context, List<Event> savedEvents) {
     return ListView.builder(
       padding: EdgeInsets.symmetric(horizontal: 20),
-      itemCount: 2,
+      itemCount: 1,
       itemBuilder: (context, index) {
         return ProfileEventCard(
-          title: "Tech Summit 2025",
-          date: DateTime(2025, 5, 15),
-          location: "Digital Conference Center",
-          imageUrl: "https://images.unsplash.com/photo-1505373877841-8d25f7d46678?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
+          event: savedEvents[index],
         );
       },
     );

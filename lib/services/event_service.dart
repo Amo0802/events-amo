@@ -27,8 +27,8 @@ class EventService {
     return PageResponse.fromJson(json, (data) => Event.fromJson(data));
   }
 
-  Future<PageResponse<Event>> getEventsByCategory(String category, {int page = 0, int size = 10}) async {
-    final json = await _apiClient.get('/event/category?category=$category&page=$page&size=$size', requiresAuth: false);
+  Future<PageResponse<Event>> getFilteredEvents(String city, String category, {int page = 0, int size = 10}) async {
+    final json = await _apiClient.get('/event/filter?city=$city&category=$category&page=$page&size=$size', requiresAuth: false);
     return PageResponse.fromJson(json, (data) => Event.fromJson(data));
   }
 
@@ -52,6 +52,6 @@ class EventService {
   }
 
   Future<void> submitEventProposal(Event event) async {
-    await _apiClient.post('/user/submit-event', event.toJson());
+    await _apiClient.post('/user/submit-event', event.toJson(), requiresAuth: false);
   }
 }

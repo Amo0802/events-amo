@@ -1,3 +1,6 @@
+import 'package:dio/dio.dart';
+import 'package:image_picker/image_picker.dart';
+
 import '../models/event.dart';
 import 'api_client.dart';
 
@@ -30,5 +33,38 @@ class UserService {
   Future<List<Event>> getAttendingEvents() async {
     final json = await _apiClient.get('/user/attending-events');
     return (json as List).map((item) => Event.fromJson(item)).toList();
+  }
+
+    Future<void> deleteCurrentUser() async {
+    await _apiClient.delete('/user/current');
+  }
+
+  Future<void> deleteUser(int userId) async {
+    await _apiClient.delete('/user/$userId');
+  }
+
+  Future<void> submitEventProposal(Event event, List<XFile> images) async {
+    // Create FormData
+    FormData formData = FormData();
+    
+    // Add text fields from the event object
+    final eventData = event.toJson();
+    for (var entry in eventData.entries) {
+      formData.fields.add(MapEntry(entry.key, entry.value.toString()));
+    }
+    
+    // Add image files
+  for (var image in images) {
+    formData.files.add(MapEntry(
+      'images',
+      await MultipartFile.fromFile(
+        image.path,
+        filename: image.name,
+      ),
+    ));
+  }
+    
+    // Send request
+    await _apiClient.postFormData('/user/submit-event', formData, requiresAuth: false);
   }
 }

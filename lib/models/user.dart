@@ -4,6 +4,7 @@ class User {
   final String lastName;
   final String email;
   final bool isAdmin;
+  //final City city;
 
   User({
     this.id,

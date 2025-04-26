@@ -1,20 +1,12 @@
-import 'package:events_amo/detaljanDogadjaj/events_detail_page.dart';
+import 'package:events_amo/models/event.dart';
+import 'package:events_amo/pages/events_detail_page.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 class StandardEventCard extends StatelessWidget {
-  final String title;
-  final String imageUrl;
-  final DateTime date;
-  final String location;
+  final Event event;
 
-  const StandardEventCard({
-    Key? key,
-    required this.title,
-    required this.imageUrl,
-    required this.date,
-    required this.location,
-  }) : super(key: key);
+  const StandardEventCard({super.key, required this.event});
 
   @override
   Widget build(BuildContext context) {
@@ -25,7 +17,7 @@ class StandardEventCard extends StatelessWidget {
         color: Color(0xFF1A1F38),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.2),
+            color: Colors.black.withValues(alpha: 0.2),
             blurRadius: 5,
             offset: Offset(0, 2),
           ),
@@ -38,14 +30,7 @@ class StandardEventCard extends StatelessWidget {
           MaterialPageRoute(
             builder:
                 (context) => EventDetailPage(
-                  eventData: {
-                    'title': title,
-                    'image': imageUrl,
-                    'date': date,
-                    'location': location,
-                    'attendees': 34, // Sample data
-                  },
-                  isOfficial: true,
+                  event: event,
                 ),
           ),
         );
@@ -60,7 +45,7 @@ class StandardEventCard extends StatelessWidget {
                 bottomLeft: Radius.circular(15),
               ),
               child: Image.network(
-                imageUrl,
+                event.imageUrl,
                 width: 100,
                 height: 100,
                 fit: BoxFit.cover,
@@ -74,7 +59,7 @@ class StandardEventCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      title,
+                      event.name,
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -92,7 +77,7 @@ class StandardEventCard extends StatelessWidget {
                         ),
                         SizedBox(width: 4),
                         Text(
-                          DateFormat('E, MMM d • h:mm a').format(date),
+                          DateFormat('E, MMM d • h:mm a').format(event.startDateTime),
                           style: TextStyle(
                             color: Colors.grey[400],
                             fontSize: 12,
@@ -111,7 +96,7 @@ class StandardEventCard extends StatelessWidget {
                         SizedBox(width: 4),
                         Expanded(
                           child: Text(
-                            location,
+                            event.location,
                             style: TextStyle(
                               color: Colors.grey[400],
                               fontSize: 12,
@@ -126,14 +111,14 @@ class StandardEventCard extends StatelessWidget {
                 ),
               ),
             ),
-            // Bookmark icon
-            Padding(
-              padding: EdgeInsets.all(12),
-              child: Icon(
-                Icons.bookmark_border,
-                color: Colors.grey[400],
-              ),
-            ),
+            // // Bookmark icon
+            // Padding(
+            //   padding: EdgeInsets.all(12),
+            //   child: Icon(
+            //     Icons.bookmark_border,
+            //     color: Colors.grey[400],
+            //   ),
+            // ),
           ],
         ),
       ),

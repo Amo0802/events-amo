@@ -1,6 +1,7 @@
 import 'package:events_amo/models/event.dart';
 import 'package:events_amo/pages/login_page.dart';
 import 'package:events_amo/providers/auth_provider.dart';
+import 'package:events_amo/providers/event_provider.dart';
 import 'package:events_amo/providers/user_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -31,12 +32,11 @@ class EventDetailPageState extends State<EventDetailPage> {
   void _toggleSave() {
     final userProvider = Provider.of<UserProvider>(context, listen: false);
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final eventProvider = Provider.of<EventProvider>(context, listen: false);
 
     // Check if user is logged in
     if (authProvider.status != AuthStatus.authenticated) {
-      Navigator.of(
-        context,
-      ).push(MaterialPageRoute(builder: (_) => LoginPage()));
+      Navigator.of(context).push(MaterialPageRoute(builder: (_) => LoginPage()));
       return;
     }
 
@@ -52,6 +52,14 @@ class EventDetailPageState extends State<EventDetailPage> {
           if (success) {
             setState(() {
               isSaved = !isSaved;
+              
+              // Create updated event with new status
+              final updatedEvent = widget.event.copyWith(
+                eventSaved: isSaved
+              );
+              
+              // Update the event in all locations
+              eventProvider.patchLocalEvent(updatedEvent);
             });
           }
         })
@@ -65,12 +73,11 @@ class EventDetailPageState extends State<EventDetailPage> {
   void _toggleAttend() {
     final userProvider = Provider.of<UserProvider>(context, listen: false);
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final eventProvider = Provider.of<EventProvider>(context, listen: false);
 
     // Check if user is logged in
     if (authProvider.status != AuthStatus.authenticated) {
-      Navigator.of(
-        context,
-      ).push(MaterialPageRoute(builder: (_) => LoginPage()));
+      Navigator.of(context).push(MaterialPageRoute(builder: (_) => LoginPage()));
       return;
     }
 
@@ -86,6 +93,14 @@ class EventDetailPageState extends State<EventDetailPage> {
           if (success) {
             setState(() {
               isAttending = !isAttending;
+              
+              // Create updated event with new status
+              final updatedEvent = widget.event.copyWith(
+                eventAttending: isAttending
+              );
+              
+              // Update the event in all locations
+              eventProvider.patchLocalEvent(updatedEvent);
             });
           }
         })
@@ -109,7 +124,6 @@ class EventDetailPageState extends State<EventDetailPage> {
                 _buildEventHeader(context),
                 _buildEventActions(context),
                 _buildEventDetails(context),
-                // _buildOrganizerInfo(context),
                 SizedBox(height: 30),
               ],
             ),
@@ -119,6 +133,17 @@ class EventDetailPageState extends State<EventDetailPage> {
       bottomNavigationBar: _buildAttendButton(context),
     );
   }
+
+  @override
+  void dispose() {
+    // Return the updated event when navigating back
+    Navigator.of(context).pop(widget.event.copyWith(
+      eventSaved: isSaved,
+      eventAttending: isAttending,
+    ));
+    super.dispose();
+  }
+
 
   Widget _buildAppBar(BuildContext context) {
     return SliverAppBar(

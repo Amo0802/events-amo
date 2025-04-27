@@ -43,9 +43,105 @@ class _CommunityEventCardState extends State<CommunityEventCard> {
     }
   }
 
+  void _toggleAttend() {
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final eventProvider = Provider.of<EventProvider>(context, listen: false);
+
+    // Check if user is logged in
+    if (authProvider.status != AuthStatus.authenticated) {
+      // Navigate to login page if not authenticated
+      Navigator.of(
+        context,
+      ).push(MaterialPageRoute(builder: (_) => LoginPage()));
+      return;
+    }
+
+    // Prevent multiple simultaneous requests
+    if (_isProcessing) return;
+
+    setState(() {
+      _isProcessing = true;
+    });
+
+    // Call the toggle method from UserProvider
+    userProvider
+        .toggleAttendEvent(widget.event.id, isAttending)
+        .then((success) {
+          if (success) {
+            setState(() {
+              isAttending = !isAttending;
+
+              // Create updated event with new status
+              final updatedEvent = widget.event.copyWith(
+                eventAttending: isAttending,
+              );
+
+              // Update the event in all locations
+              eventProvider.patchLocalEvent(updatedEvent);
+            });
+          } else {
+            // Show error message if failed
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  userProvider.error ?? 'Failed to update attendance',
+                ),
+              ),
+            );
+          }
+        })
+        .whenComplete(() {
+          setState(() {
+            _isProcessing = false;
+          });
+        });
+  }
+
+  void _toggleSave() {
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final eventProvider = Provider.of<EventProvider>(context, listen: false);
+
+    // Check if user is logged in first
+    if (authProvider.status != AuthStatus.authenticated) {
+      Navigator.of(
+        context,
+      ).push(MaterialPageRoute(builder: (_) => LoginPage()));
+      return;
+    }
+
+    if (_isProcessing) return;
+
+    setState(() {
+      _isProcessing = true;
+    });
+
+    userProvider
+        .toggleSaveEvent(widget.event.id, isSaved)
+        .then((success) {
+          if (success) {
+            setState(() {
+              isSaved = !isSaved;
+
+              // Create updated event with new status
+              final updatedEvent = widget.event.copyWith(eventSaved: isSaved);
+
+              // Update the event in all locations
+              eventProvider.patchLocalEvent(updatedEvent);
+            });
+          }
+        })
+        .whenComplete(() {
+          setState(() {
+            _isProcessing = false;
+          });
+        });
+  }
+
   @override
   Widget build(BuildContext context) {
-    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    Provider.of<UserProvider>(context, listen: false);
     final eventProvider = context.read<EventProvider>();
     return GestureDetector(
       onTap: () {
@@ -270,47 +366,7 @@ class _CommunityEventCardState extends State<CommunityEventCard> {
                                   ? Theme.of(context).colorScheme.tertiary
                                   : Colors.grey[400],
                         ),
-                        onPressed:
-                            _isProcessing
-                                ? null
-                                : () async {
-                                  // Check if user is logged in first
-                                  final authProvider =
-                                      Provider.of<AuthProvider>(
-                                        context,
-                                        listen: false,
-                                      );
-
-                                  // If not authenticated, navigate to login page
-                                  if (authProvider.status !=
-                                      AuthStatus.authenticated) {
-                                    Navigator.of(context).push(
-                                      MaterialPageRoute(
-                                        builder: (_) => LoginPage(),
-                                      ),
-                                    );
-                                    return;
-                                  }
-                                  setState(() {
-                                    _isProcessing = true;
-                                  });
-
-                                  bool success = await userProvider
-                                      .toggleSaveEvent(
-                                        widget.event.id,
-                                        isSaved,
-                                      );
-
-                                  if (success) {
-                                    setState(() {
-                                      isSaved = !isSaved;
-                                    });
-                                  }
-
-                                  setState(() {
-                                    _isProcessing = false;
-                                  });
-                                },
+                        onPressed: _isProcessing ? null : _toggleSave,
                       ),
                     ],
                   ),
@@ -342,51 +398,5 @@ class _CommunityEventCardState extends State<CommunityEventCard> {
       default:
         return Theme.of(context).colorScheme.primary;
     }
-  }
-
-  void _toggleAttend() {
-    final userProvider = Provider.of<UserProvider>(context, listen: false);
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-
-    // Check if user is logged in
-    if (authProvider.status != AuthStatus.authenticated) {
-      // Navigate to login page if not authenticated
-      Navigator.of(
-        context,
-      ).push(MaterialPageRoute(builder: (_) => LoginPage()));
-      return;
-    }
-
-    // Prevent multiple simultaneous requests
-    if (_isProcessing) return;
-
-    setState(() {
-      _isProcessing = true;
-    });
-
-    // Call the toggle method from UserProvider
-    userProvider
-        .toggleAttendEvent(widget.event.id, isAttending)
-        .then((success) {
-          if (success) {
-            setState(() {
-              isAttending = !isAttending;
-            });
-          } else {
-            // Show error message if failed
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                  userProvider.error ?? 'Failed to update attendance',
-                ),
-              ),
-            );
-          }
-        })
-        .whenComplete(() {
-          setState(() {
-            _isProcessing = false;
-          });
-        });
   }
 }

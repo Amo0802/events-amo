@@ -252,24 +252,54 @@ class EventProvider with ChangeNotifier {
     }
   }
 
+  // Improved patchLocalEvent method that updates events in all locations
   void patchLocalEvent(Event updatedEvent) {
     bool hasUpdated = false;
 
-    void updateEventInList(PageResponse<Event>? page) {
-      if (page == null) return;
+    // Helper function to update event in a list
+    void updateEventInList(List<Event>? events) {
+      if (events == null || events.isEmpty) return;
 
-      final index = page.content.indexWhere((e) => e.id == updatedEvent.id);
+      final index = events.indexWhere((e) => e.id == updatedEvent.id);
       if (index != -1) {
-        page.content[index] = updatedEvent;
+        events[index] = updatedEvent;
         hasUpdated = true;
       }
     }
 
-    updateEventInList(_events);
-    updateEventInList(_mainEvents);
-    updateEventInList(_promotedEvents);
-    updateEventInList(_filteredEvents);
-    updateEventInList(_searchResults);
+    // Helper function to update event in a PageResponse
+    void updateEventInPageResponse(PageResponse<Event>? page) {
+      if (page == null) return;
+      updateEventInList(page.content);
+    }
+
+    // Update in all possible locations
+    updateEventInPageResponse(_events);
+    updateEventInPageResponse(_mainEvents);
+    updateEventInPageResponse(_promotedEvents);
+    updateEventInPageResponse(_filteredEvents);
+    updateEventInPageResponse(_searchResults);
+
+    // Update in UserProvider lists if needed
+    final context = NavigationService.navigatorKey.currentContext;
+    if (context != null) {
+      try {
+        final userProvider = Provider.of<UserProvider>(context, listen: false);
+        // Update in saved events
+        updateEventInList(userProvider.savedEvents);
+        // Update in attending events
+        updateEventInList(userProvider.attendingEvents);
+      } catch (e) {
+        print('Error updating UserProvider lists: $e');
+        // If there's an error (like Provider not found), continue without failing
+      }
+    }
+
+    // Update selected event if it matches
+    if (_selectedEvent?.id == updatedEvent.id) {
+      _selectedEvent = updatedEvent;
+      hasUpdated = true;
+    }
 
     if (hasUpdated) {
       notifyListeners();
@@ -339,5 +369,52 @@ class EventProvider with ChangeNotifier {
   void updateSearchResults(PageResponse<Event> results) {
     _searchResults = results;
     notifyListeners();
+  }
+
+    // Add this method to EventProvider
+  void resetEventStatuses() {
+    bool hasUpdated = false;
+    
+    // Helper function to reset status in a list
+    void resetStatusInList(List<Event>? events) {
+      if (events == null || events.isEmpty) return;
+      
+      for (var i = 0; i < events.length; i++) {
+        final event = events[i];
+        if (event.eventSaved || event.eventAttending) {
+          events[i] = event.copyWith(
+            eventSaved: false,
+            eventAttending: false
+          );
+          hasUpdated = true;
+        }
+      }
+    }
+    
+    // Helper function to reset status in a PageResponse
+    void resetStatusInPageResponse(PageResponse<Event>? page) {
+      if (page == null) return;
+      resetStatusInList(page.content);
+    }
+    
+    // Reset in all locations
+    resetStatusInPageResponse(_events);
+    resetStatusInPageResponse(_mainEvents);
+    resetStatusInPageResponse(_promotedEvents);
+    resetStatusInPageResponse(_filteredEvents);
+    resetStatusInPageResponse(_searchResults);
+    
+    // Reset selected event if needed
+    if (_selectedEvent != null && (_selectedEvent!.eventSaved || _selectedEvent!.eventAttending)) {
+      _selectedEvent = _selectedEvent!.copyWith(
+        eventSaved: false,
+        eventAttending: false
+      );
+      hasUpdated = true;
+    }
+    
+    if (hasUpdated) {
+      notifyListeners();
+    }
   }
 }

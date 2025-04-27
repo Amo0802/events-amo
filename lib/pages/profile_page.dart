@@ -47,11 +47,11 @@ class ProfilePageState extends State<ProfilePage> {
                   user?.lastName ?? "User",
                   user?.email ?? "guest@example.com",
                 ),
-                _buildStatsSection(
-                  context,
-                  userProvider.attendingEvents.length,
-                  0,
-                ), // 0 for events created as we don't track this yet
+                // _buildStatsSection(
+                //   context,
+                //   userProvider.attendingEvents.length,
+                //   0,
+                // ), // 0 for events created as we don't track this yet
                 _buildTabSection(
                   context,
                   userProvider.attendingEvents.isEmpty
@@ -147,59 +147,59 @@ class ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  Widget _buildStatsSection(
-    BuildContext context,
-    int attendedCount,
-    int createdCount,
-  ) {
-    return SliverToBoxAdapter(
-      child: Container(
-        padding: EdgeInsets.symmetric(vertical: 10),
-        margin: EdgeInsets.symmetric(horizontal: 20),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(15),
-          color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
-          border: Border.all(
-            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
-            width: 1.5,
-          ),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            _buildStat(context, "Events\nAttended", attendedCount.toString()),
-            _buildStat(context, "Events\nCreated", createdCount.toString()),
-            _buildStat(
-              context,
-              "Friends",
-              "0",
-            ), // Placeholder for future feature
-          ],
-        ),
-      ),
-    );
-  }
+  // Widget _buildStatsSection(
+  //   BuildContext context,
+  //   int attendedCount,
+  //   int createdCount,
+  // ) {
+  //   return SliverToBoxAdapter(
+  //     child: Container(
+  //       padding: EdgeInsets.symmetric(vertical: 10),
+  //       margin: EdgeInsets.symmetric(horizontal: 20),
+  //       decoration: BoxDecoration(
+  //         borderRadius: BorderRadius.circular(15),
+  //         color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+  //         border: Border.all(
+  //           color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
+  //           width: 1.5,
+  //         ),
+  //       ),
+  //       child: Row(
+  //         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+  //         children: [
+  //           _buildStat(context, "Events\nAttended", attendedCount.toString()),
+  //           _buildStat(context, "Events\nCreated", createdCount.toString()),
+  //           _buildStat(
+  //             context,
+  //             "Friends",
+  //             "0",
+  //           ), // Placeholder for future feature
+  //         ],
+  //       ),
+  //     ),
+  //   );
+  // }
 
-  Widget _buildStat(BuildContext context, String label, String value) {
-    return Column(
-      children: [
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 28,
-            fontWeight: FontWeight.bold,
-            color: Theme.of(context).colorScheme.primary,
-          ),
-        ),
-        SizedBox(height: 4),
-        Text(
-          label,
-          textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 14, color: Colors.grey[400]),
-        ),
-      ],
-    );
-  }
+  // Widget _buildStat(BuildContext context, String label, String value) {
+  //   return Column(
+  //     children: [
+  //       Text(
+  //         value,
+  //         style: TextStyle(
+  //           fontSize: 28,
+  //           fontWeight: FontWeight.bold,
+  //           color: Theme.of(context).colorScheme.primary,
+  //         ),
+  //       ),
+  //       SizedBox(height: 4),
+  //       Text(
+  //         label,
+  //         textAlign: TextAlign.center,
+  //         style: TextStyle(fontSize: 14, color: Colors.grey[400]),
+  //       ),
+  //     ],
+  //   );
+  // }
 
   Widget _buildTabSection(
     BuildContext context,

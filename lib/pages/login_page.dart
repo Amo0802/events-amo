@@ -52,24 +52,23 @@ class LoginPageState extends State<LoginPage> with SingleTickerProviderStateMixi
         _isLoading = true;
       });
 
-      final authProvider = context.read<AuthProvider>(); // Access AuthProvider
+      final authProvider = context.read<AuthProvider>();
 
-      // Perform the login using the AuthProvider's login method
       bool success = await authProvider.login(
         _emailController.text.trim(),
         _passwordController.text,
       );
 
-      if (mounted) { // Ensure the widget is still mounted before using the context
+      if (mounted) {
         if (success) {
-          // Replace the current route with MainPage and set the index to profile tab (2)
-          Navigator.of(context).pushReplacement(
+          // Replace the current route stack with MainPage and set the index to profile tab (2)
+          Navigator.of(context).pushAndRemoveUntil(
             MaterialPageRoute(
               builder: (context) => MainPage(initialTabIndex: 2),
             ),
+            (route) => false, // This removes all previous routes
           );
         } else {
-          // If login fails, show an error message
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Login failed: ${authProvider.error}'),
@@ -262,10 +261,10 @@ class LoginPageState extends State<LoginPage> with SingleTickerProviderStateMixi
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.1),
+        color: Colors.white.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: Colors.white.withOpacity(0.2),
+          color: Colors.white.withValues(alpha: 0.2),
           width: 1,
         ),
       ),
@@ -292,10 +291,10 @@ class LoginPageState extends State<LoginPage> with SingleTickerProviderStateMixi
   Widget _buildPasswordField() {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.1),
+        color: Colors.white.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: Colors.white.withOpacity(0.2),
+          color: Colors.white.withValues(alpha: 0.2),
           width: 1,
         ),
       ),

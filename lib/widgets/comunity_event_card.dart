@@ -274,6 +274,23 @@ class _CommunityEventCardState extends State<CommunityEventCard> {
                             _isProcessing
                                 ? null
                                 : () async {
+                                  // Check if user is logged in first
+                                  final authProvider =
+                                      Provider.of<AuthProvider>(
+                                        context,
+                                        listen: false,
+                                      );
+
+                                  // If not authenticated, navigate to login page
+                                  if (authProvider.status !=
+                                      AuthStatus.authenticated) {
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (_) => LoginPage(),
+                                      ),
+                                    );
+                                    return;
+                                  }
                                   setState(() {
                                     _isProcessing = true;
                                   });

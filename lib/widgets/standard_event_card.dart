@@ -1,7 +1,9 @@
 import 'package:events_amo/models/event.dart';
 import 'package:events_amo/pages/events_detail_page.dart';
+import 'package:events_amo/providers/event_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 
 class StandardEventCard extends StatelessWidget {
   final Event event;
@@ -26,14 +28,19 @@ class StandardEventCard extends StatelessWidget {
       child: InkWell(
         onTap: () {
           Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder:
-                (context) => EventDetailPage(
-                  event: event,
-                ),
-          ),
-        );
+            context,
+            MaterialPageRoute(
+              builder: (context) => EventDetailPage(event: event),
+            ),
+          ).then((updatedEvent) {
+            if (updatedEvent != null && updatedEvent is Event) {
+              final eventProvider = Provider.of<EventProvider>(
+                context,
+                listen: false,
+              );
+              eventProvider.patchLocalEvent(updatedEvent);
+            }
+          });
         },
         borderRadius: BorderRadius.circular(15),
         child: Row(
@@ -77,7 +84,9 @@ class StandardEventCard extends StatelessWidget {
                         ),
                         SizedBox(width: 4),
                         Text(
-                          DateFormat('E, MMM d • h:mm a').format(event.startDateTime),
+                          DateFormat(
+                            'E, MMM d • h:mm a',
+                          ).format(event.startDateTime),
                           style: TextStyle(
                             color: Colors.grey[400],
                             fontSize: 12,

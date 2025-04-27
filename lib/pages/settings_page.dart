@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:events_amo/providers/auth_provider.dart';
 import 'package:events_amo/providers/user_provider.dart';
-import 'package:events_amo/services/auth_service.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -15,114 +14,128 @@ class _SettingsPageState extends State<SettingsPage> {
   void _showLogoutDialog() {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: Color(0xFF1A1F38),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-        title: Text(
-          "Log Out",
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        content: Text(
-          "Are you sure you want to log out?",
-          style: TextStyle(color: Colors.grey[300]),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text("Cancel", style: TextStyle(color: Colors.grey[400])),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.redAccent,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
+      builder:
+          (context) => AlertDialog(
+            backgroundColor: Color(0xFF1A1F38),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            title: Text(
+              "Log Out",
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
               ),
             ),
-            onPressed: () async {
-              Navigator.of(context).pop();
+            content: Text(
+              "Are you sure you want to log out?",
+              style: TextStyle(color: Colors.grey[300]),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: Text(
+                  "Cancel",
+                  style: TextStyle(color: Colors.grey[400]),
+                ),
+              ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.redAccent,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                onPressed: () {
+                  // Close dialog first
+                  Navigator.of(context).pop();
 
-              final authProvider = context.read<AuthProvider>();
-              final navigator = Navigator.of(context);
-              await authProvider.logout();
+                  // Store everything we need from context before async work
+                  final navigator = Navigator.of(context);
+                  final authProvider = context.read<AuthProvider>();
 
-              if (!mounted) return;
-
-              navigator.pushNamedAndRemoveUntil('/login', (_) => false);
-            },
-            child: Text("Log Out", style: TextStyle(color: Colors.white)),
+                  // Then do the async work as a separate function that doesn't use context
+                  () async {
+                    await authProvider.logout();
+                    navigator.popUntil((route) => route.isFirst);
+                  }();
+                },
+                child: Text("Log Out", style: TextStyle(color: Colors.white)),
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
 
-void _showDeleteAccountDialog() {
-  showDialog(
-    context: context,
-    builder: (context) => AlertDialog(
-      backgroundColor: Color(0xFF1A1F38),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
-      title: Text(
-        "Delete Account",
-        style: TextStyle(
-          color: Colors.redAccent,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-      content: Text(
-        "This action cannot be undone. All your data will be permanently deleted. Are you sure?",
-        style: TextStyle(color: Colors.grey[300]),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: Text("Cancel", style: TextStyle(color: Colors.grey[400])),
-        ),
-        ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.redAccent,
+  void _showDeleteAccountDialog() {
+    showDialog(
+      context: context,
+      builder:
+          (context) => AlertDialog(
+            backgroundColor: Color(0xFF1A1F38),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(16),
             ),
+            title: Text(
+              "Delete Account",
+              style: TextStyle(
+                color: Colors.redAccent,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            content: Text(
+              "This action cannot be undone. All your data will be permanently deleted. Are you sure?",
+              style: TextStyle(color: Colors.grey[300]),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: Text(
+                  "Cancel",
+                  style: TextStyle(color: Colors.grey[400]),
+                ),
+              ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.redAccent,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                onPressed: () {
+                  // Close dialog first
+                  Navigator.of(context).pop();
+
+                  // Store everything we need from context before async work
+                  final navigator = Navigator.of(context);
+                  final scaffoldMessenger = ScaffoldMessenger.of(context);
+                  final userProvider = context.read<UserProvider>();
+                  final authProvider = context.read<AuthProvider>();
+
+                  // Then do async work as a separate function
+                  () async {
+                    final success = await userProvider.deleteCurrentUser();
+
+                    if (success) {
+                      await authProvider.logout();
+                      navigator.popUntil((route) => route.isFirst);
+                    } else {
+                      scaffoldMessenger.showSnackBar(
+                        SnackBar(content: Text("Failed to delete account")),
+                      );
+                    }
+                  }();
+                },
+                child: Text(
+                  "Delete Account",
+                  style: TextStyle(color: Colors.white),
+                ),
+              ),
+            ],
           ),
-          onPressed: () async {
-            // Close dialog
-            Navigator.of(context).pop();
-            
-            // Store necessary context references before await
-            final userProvider = context.read<UserProvider>();
-            final authService = context.read<AuthService>();
-            final scaffoldMessenger = ScaffoldMessenger.of(context);
-            final navigator = Navigator.of(context);
-            
-            // Perform async operation
-            final success = await userProvider.deleteCurrentUser();
+    );
+  }
 
-            // Check if widget is still mounted after async operation
-            if (!mounted) return;
-
-            if (success) {
-              await authService.logout();
-              navigator.pushNamedAndRemoveUntil('/login', (_) => false);
-            } else {
-              scaffoldMessenger.showSnackBar(
-                SnackBar(content: Text("Failed to delete account")),
-              );
-            }
-          },
-          child: Text("Delete Account", style: TextStyle(color: Colors.white)),
-        ),
-      ],
-    ),
-  );
-}
   Widget _buildSectionHeader(String title, {Color? color}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 16.0),
@@ -151,7 +164,9 @@ void _showDeleteAccountDialog() {
         width: 40,
         height: 40,
         decoration: BoxDecoration(
-          color: (iconColor ?? theme.colorScheme.secondary).withOpacity(0.1),
+          color: (iconColor ?? theme.colorScheme.secondary).withValues(
+            alpha: 0.1,
+          ),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Icon(icon, color: iconColor ?? theme.colorScheme.secondary),
@@ -171,11 +186,7 @@ void _showDeleteAccountDialog() {
   }
 
   Widget _buildDivider() {
-    return Divider(
-      color: Colors.grey[800],
-      thickness: 1,
-      height: 1,
-    );
+    return Divider(color: Colors.grey[800], thickness: 1, height: 1);
   }
 
   @override

@@ -1,4 +1,6 @@
 import 'package:events_amo/models/event.dart';
+import 'package:events_amo/pages/login_page.dart';
+import 'package:events_amo/providers/auth_provider.dart';
 import 'package:events_amo/providers/user_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -28,54 +30,70 @@ class EventDetailPageState extends State<EventDetailPage> {
 
   void _toggleSave() {
     final userProvider = Provider.of<UserProvider>(context, listen: false);
-    _isProcessing
-        ? null
-        : () async {
-          setState(() {
-            _isProcessing = true;
-          });
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
-          bool success = await userProvider.toggleSaveEvent(
-            widget.event.id,
-            isSaved,
-          );
+    // Check if user is logged in
+    if (authProvider.status != AuthStatus.authenticated) {
+      Navigator.of(
+        context,
+      ).push(MaterialPageRoute(builder: (_) => LoginPage()));
+      return;
+    }
 
+    if (_isProcessing) return;
+
+    setState(() {
+      _isProcessing = true;
+    });
+
+    userProvider
+        .toggleSaveEvent(widget.event.id, isSaved)
+        .then((success) {
           if (success) {
             setState(() {
               isSaved = !isSaved;
             });
           }
-
+        })
+        .whenComplete(() {
           setState(() {
             _isProcessing = false;
           });
-        };
+        });
   }
 
   void _toggleAttend() {
     final userProvider = Provider.of<UserProvider>(context, listen: false);
-    _isProcessing
-        ? null
-        : () async {
-          setState(() {
-            _isProcessing = true;
-          });
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
-          bool success = await userProvider.toggleAttendEvent(
-            widget.event.id,
-            isAttending,
-          );
+    // Check if user is logged in
+    if (authProvider.status != AuthStatus.authenticated) {
+      Navigator.of(
+        context,
+      ).push(MaterialPageRoute(builder: (_) => LoginPage()));
+      return;
+    }
 
+    if (_isProcessing) return;
+
+    setState(() {
+      _isProcessing = true;
+    });
+
+    userProvider
+        .toggleAttendEvent(widget.event.id, isAttending)
+        .then((success) {
           if (success) {
             setState(() {
               isAttending = !isAttending;
             });
           }
-
+        })
+        .whenComplete(() {
           setState(() {
             _isProcessing = false;
           });
-        };
+        });
   }
 
   @override
@@ -91,7 +109,7 @@ class EventDetailPageState extends State<EventDetailPage> {
                 _buildEventHeader(context),
                 _buildEventActions(context),
                 _buildEventDetails(context),
-               // _buildOrganizerInfo(context),
+                // _buildOrganizerInfo(context),
                 SizedBox(height: 30),
               ],
             ),
@@ -116,7 +134,10 @@ class EventDetailPageState extends State<EventDetailPage> {
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
-                  colors: [Colors.transparent, Colors.black.withValues(alpha: 0.8)],
+                  colors: [
+                    Colors.transparent,
+                    Colors.black.withValues(alpha: 0.8),
+                  ],
                 ),
               ),
             ),
@@ -151,10 +172,14 @@ class EventDetailPageState extends State<EventDetailPage> {
         ),
       ),
       leading: InkWell(
-        onTap: () => Navigator.pop(context, widget.event.copyWith(
-      eventSaved: isSaved,
-      eventAttending: isAttending,
-    ),),
+        onTap:
+            () => Navigator.pop(
+              context,
+              widget.event.copyWith(
+                eventSaved: isSaved,
+                eventAttending: isAttending,
+              ),
+            ),
         child: Container(
           margin: EdgeInsets.only(left: 16, top: 16),
           decoration: BoxDecoration(

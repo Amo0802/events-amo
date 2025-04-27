@@ -34,7 +34,7 @@ class HomePageState extends State<HomePage> {
             if (provider.isLoading) {
               return const Center(child: CircularProgressIndicator());
             }
-            
+
             return CustomScrollView(
               slivers: [
                 _buildAppBar(context),
@@ -78,19 +78,19 @@ class HomePageState extends State<HomePage> {
           ),
         ],
       ),
-      actions: [
-        IconButton(
-          icon: Icon(
-            Icons.notifications_outlined,
-            color: Colors.white,
-            size: 28,
-          ),
-          onPressed: () {
-            // Navigate to notifications
-          },
-        ),
-        SizedBox(width: 10),
-      ],
+      // actions: [
+      //   IconButton(
+      //     icon: Icon(
+      //       Icons.notifications_outlined,
+      //       color: Colors.white,
+      //       size: 28,
+      //     ),
+      //     onPressed: () {
+      //       // Navigate to notifications
+      //     },
+      //   ),
+      //   SizedBox(width: 10),
+      // ],
     );
   }
 
@@ -123,9 +123,7 @@ class HomePageState extends State<HomePage> {
             itemCount: promotedEvents.length,
             itemBuilder: (context, index, _) {
               final event = promotedEvents[index];
-              return FeaturedEventCard(
-                event: event,
-              );
+              return FeaturedEventCard(event: event);
             },
             options: CarouselOptions(
               height: 320,
@@ -154,18 +152,20 @@ class HomePageState extends State<HomePage> {
                   color: Theme.of(context).colorScheme.secondary,
                 ),
                 SizedBox(width: 8),
-                Text(
-                  "Upcoming Official Events",
-                  style: Theme.of(context).textTheme.titleLarge,
+                Expanded(
+                  // Wrap in Expanded
+                  child: Text(
+                    "Upcoming Official Events",
+                    style: Theme.of(context).textTheme.titleLarge,
+                    overflow: TextOverflow.ellipsis, // Add this
+                  ),
                 ),
               ],
             ),
           );
         }
         final event = events[index - 1];
-        return StandardEventCard(
-          event: event,
-        );
+        return StandardEventCard(event: event);
       }, childCount: events.length + 1),
     );
   }

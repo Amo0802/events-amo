@@ -1,16 +1,17 @@
+import 'package:events_amo/pages/admin/admin_create_event_menu.dart';
 import 'package:events_amo/pages/comunity_events_page.dart';
-import 'package:events_amo/widgets/create_event_menu.dart';
 import 'package:events_amo/pages/home_page.dart';
 import 'package:events_amo/pages/login_page.dart';
 import 'package:events_amo/pages/profile_page.dart';
 import 'package:events_amo/pages/search_page.dart';
+import 'package:events_amo/pages/create_events.dart';
 import 'package:events_amo/providers/auth_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 class MainPage extends StatefulWidget {
   final int initialTabIndex;
-  
+
   const MainPage({super.key, this.initialTabIndex = 0});
 
   @override
@@ -50,6 +51,39 @@ class _MainPageState extends State<MainPage> {
     }
   }
 
+  void _handleCreateButtonPressed() {
+    final authProvider = context.read<AuthProvider>();
+
+    // If user is not logged in, redirect to login page
+    if (authProvider.status != AuthStatus.authenticated) {
+      Navigator.of(
+        context,
+      ).push(MaterialPageRoute(builder: (_) => LoginPage()));
+      return;
+    }
+
+    // Debug - check admin status
+    print(
+      "User admin status check: ${authProvider.currentUser?.email}, isAdmin: ${authProvider.isAdmin}",
+    );
+
+    // If user is admin, show admin menu options
+    if (authProvider.isAdmin) {
+      print("Opening admin menu options");
+      setState(() {
+        _isCreateMenuOpen = true;
+      });
+      return;
+    }
+
+    // If regular user, go directly to create event page
+    print("Opening regular user create event page");
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => CreateEventPage()),
+    );
+  }
+
   void _toggleCreateMenu() {
     setState(() {
       _isCreateMenuOpen = !_isCreateMenuOpen;
@@ -69,6 +103,8 @@ class _MainPageState extends State<MainPage> {
           : Colors.white60;
     }
 
+    final authProvider = Provider.of<AuthProvider>(context);
+    final isAdmin = authProvider.isAdmin;
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -77,11 +113,27 @@ class _MainPageState extends State<MainPage> {
           IndexedStack(index: _currentIndex, children: _pages),
           if (_isCreateMenuOpen)
             GestureDetector(
-              onTap: _toggleCreateMenu,
+              onTap: () {
+                if (isAdmin) {
+                  _toggleCreateMenu(); // Open admin menu
+                } else {
+                  // First close the overlay
+                  Navigator.of(context).pop();
+
+                  // Then navigate to CreateEventPage
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => CreateEventPage()),
+                  );
+                }
+              },
               child: Container(
                 color: Colors.black.withOpacity(0.7),
                 child: Center(
-                  child: CreateEventMenu(onClose: _toggleCreateMenu),
+                  child:
+                      isAdmin
+                          ? AdminCreateEventMenu(onClose: _toggleCreateMenu)
+                          : const SizedBox(), // Nothing shown if not admin
                 ),
               ),
             ),
@@ -127,7 +179,7 @@ class _MainPageState extends State<MainPage> {
       ),
       floatingActionButton: FloatingActionButton(
         backgroundColor: theme.colorScheme.tertiary,
-        onPressed: _toggleCreateMenu,
+        onPressed: _handleCreateButtonPressed,
         child: Icon(_isCreateMenuOpen ? Icons.close : Icons.add, size: 30),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,

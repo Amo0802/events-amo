@@ -208,14 +208,14 @@ class ProfilePageState extends State<ProfilePage> {
   ) {
     return SliverToBoxAdapter(
       child: DefaultTabController(
-        length: 3,
+        length: 2,
         child: Column(
           children: [
             SizedBox(height: 20),
             TabBar(
               tabs: [
                 Tab(text: "Upcoming"),
-                Tab(text: "Past"),
+                // Tab(text: "Past"),
                 Tab(text: "Saved"),
               ],
               labelColor: Theme.of(context).colorScheme.secondary,
@@ -229,7 +229,7 @@ class ProfilePageState extends State<ProfilePage> {
               child: TabBarView(
                 children: [
                   _buildUpcomingEvents(context, attendingEvents),
-                  _buildPastEvents(context),
+                  // _buildPastEvents(context),
                   _buildSavedEvents(context, savedEvents),
                 ],
               ),
@@ -262,14 +262,14 @@ class ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  Widget _buildPastEvents(BuildContext context) {
-    return Center(
-      child: Text(
-        "You have no past events",
-        style: TextStyle(color: Colors.grey[500], fontSize: 16),
-      ),
-    );
-  }
+  // Widget _buildPastEvents(BuildContext context) {
+  //   return Center(
+  //     child: Text(
+  //       "You have no past events",
+  //       style: TextStyle(color: Colors.grey[500], fontSize: 16),
+  //     ),
+  //   );
+  // }
 
   Widget _buildSavedEvents(BuildContext context, List<Event> savedEvents) {
     if (savedEvents.isEmpty) {

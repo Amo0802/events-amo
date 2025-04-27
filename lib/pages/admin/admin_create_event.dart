@@ -1,42 +1,44 @@
-import 'dart:io';
 import 'package:events_amo/models/event.dart';
-import 'package:events_amo/providers/user_provider.dart';
-import 'package:events_amo/utils/single_decimal.dart';
+import 'package:events_amo/providers/event_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:image_picker/image_picker.dart';
+import 'package:events_amo/utils/single_decimal.dart';
 import 'package:multi_select_flutter/multi_select_flutter.dart';
 import 'package:provider/provider.dart';
 
-class CreateEventPage extends StatefulWidget {
-
-  const CreateEventPage({super.key});
+class AdminCreateEventPage extends StatefulWidget {
+  const AdminCreateEventPage({super.key});
 
   @override
-  State<CreateEventPage> createState() => _CreateEventPageState();
+  State<AdminCreateEventPage> createState() => _AdminCreateEventPageState();
 }
 
-class _CreateEventPageState extends State<CreateEventPage> {
+class _AdminCreateEventPageState extends State<AdminCreateEventPage> {
   final _formKey = GlobalKey<FormState>();
-  final ImagePicker _picker = ImagePicker();
   
   // Form fields
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _locationController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
   final TextEditingController _priceController = TextEditingController();
+  final TextEditingController _mainImageUrlController = TextEditingController();
+  final TextEditingController _otherImagesUrlController = TextEditingController();
   
   DateTime? _selectedDate;
   TimeOfDay? _selectedTime;
   List<String> _selectedCategories = [];
-  List<XFile>? _images = [];
+  String _selectedCity = 'PODGORICA';
   
   bool _isLoading = false;
   String? _errorMessage;
   
-  // Available categories
+  // Available categories and cities
   final List<String> _availableCategories = [
     'Music', 'Sports', 'Art', 'Food', 'Technology'
+  ];
+  
+  final List<String> _availableCities = [
+    'PODGORICA', 'BERANE', 'NIKSIC'
   ];
 
   @override
@@ -45,16 +47,9 @@ class _CreateEventPageState extends State<CreateEventPage> {
     _locationController.dispose();
     _descriptionController.dispose();
     _priceController.dispose();
+    _mainImageUrlController.dispose();
+    _otherImagesUrlController.dispose();
     super.dispose();
-  }
-
-  Future<void> _pickImages() async {
-    final List<XFile> selectedImages = await _picker.pickMultiImage();
-    if (selectedImages.isNotEmpty) {
-      setState(() {
-        _images = selectedImages;
-      });
-    }
   }
 
   Future<void> _selectDate(BuildContext context) async {
@@ -108,7 +103,7 @@ class _CreateEventPageState extends State<CreateEventPage> {
     );
   }
 
-  Future<void> _submitEventProposal() async {
+  Future<void> _createEvent() async {
     if (_formKey.currentState?.validate() != true) {
       return;
     }
@@ -129,22 +124,12 @@ class _CreateEventPageState extends State<CreateEventPage> {
       return;
     }
 
-    // if (_images == null || _images!.isEmpty) {
-    //   setState(() {
-    //     _errorMessage = "Please upload at least one image";
-    //   });
-    //   _showSnackBar(_errorMessage!);
-    //   return;
-    // }
-
     setState(() {
       _isLoading = true;
       _errorMessage = null;
     });
 
-      // Create multipart request
-      final userProvider = Provider.of<UserProvider>(context, listen: false);
-      
+    try {
       // Combine date and time into a single DateTime
       final DateTime eventDateTime = DateTime(
         _selectedDate!.year,
@@ -154,37 +139,51 @@ class _CreateEventPageState extends State<CreateEventPage> {
         _selectedTime!.minute,
       );
 
-      // Add text fields
-      final event = Event.forSubmission(
+      // Create event object
+      final event = Event(
+        id: -1, // Placeholder ID to be replaced by backend
         name: _titleController.text,
         description: _descriptionController.text,
+        imageUrl: _mainImageUrlController.text,
+        city: _selectedCity,
         address: _locationController.text,
         startDateTime: eventDateTime,
         price: double.tryParse(_priceController.text) ?? 0.0,
         categories: _selectedCategories,
+        mainEvent: true, // Admin created events are main events
       );
 
-      // Add image files
-      bool success = await userProvider.submitEventProposal(event, _images!);
+      // Create the event
+      final eventProvider = Provider.of<EventProvider>(context, listen: false);
+      final success = await eventProvider.createEvent(event);
 
       if (success) {
-        _showSuccessDialog();
+        _showSuccessDialog("Event created successfully");
       } else {
         setState(() {
-          _errorMessage = userProvider.error;
-          _isLoading = false;
+          _errorMessage = eventProvider.error ?? "Failed to create event";
         });
         _showSnackBar(_errorMessage!);
       }
+    } catch (e) {
+      setState(() {
+        _errorMessage = e.toString();
+      });
+      _showSnackBar(_errorMessage!);
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
   }
 
-  void _showSuccessDialog() {
+  void _showSuccessDialog(String message) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text("Success"),
-          content: const Text("Your event proposal has been submitted successfully. We will review it shortly."),
+          content: Text(message),
           actions: [
             TextButton(
               child: const Text("OK"),
@@ -212,7 +211,7 @@ class _CreateEventPageState extends State<CreateEventPage> {
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
         title: Text(
-          "Create Event Request",
+          "Create Event (Admin)",
           style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
         ),
       ),
@@ -225,8 +224,6 @@ class _CreateEventPageState extends State<CreateEventPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildImagePicker(context),
-                    const SizedBox(height: 20),
                     _buildTextField(
                       controller: _titleController,
                       label: "Event Title",
@@ -240,6 +237,8 @@ class _CreateEventPageState extends State<CreateEventPage> {
                         return null;
                       },
                     ),
+                    const SizedBox(height: 20),
+                    _buildCityDropdown(context),
                     const SizedBox(height: 20),
                     _buildTextField(
                       controller: _locationController,
@@ -279,6 +278,39 @@ class _CreateEventPageState extends State<CreateEventPage> {
                     _buildCategoryPicker(context),
                     const SizedBox(height: 20),
                     _buildTextField(
+                      controller: _mainImageUrlController,
+                      label: "Main Image URL",
+                      hint: "Enter URL for main event image",
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter a URL for the main image';
+                        }
+                        if (!Uri.tryParse(value)!.isAbsolute) {
+                          return 'Please enter a valid URL';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 20),
+                    _buildTextField(
+                      controller: _otherImagesUrlController,
+                      label: "Other Image URLs (optional)",
+                      hint: "Enter URLs separated by commas",
+                      validator: (value) {
+                        if (value != null && value.isNotEmpty) {
+                          final urls = value.split(',');
+                          for (final url in urls) {
+                            final trimmedUrl = url.trim();
+                            if (trimmedUrl.isNotEmpty && !Uri.tryParse(trimmedUrl)!.isAbsolute) {
+                              return 'Please enter valid URLs separated by commas';
+                            }
+                          }
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 20),
+                    _buildTextField(
                       controller: _descriptionController,
                       label: "Description",
                       hint: "Enter event description",
@@ -300,87 +332,51 @@ class _CreateEventPageState extends State<CreateEventPage> {
     );
   }
 
-  Widget _buildImagePicker(BuildContext context) {
-    return GestureDetector(
-      onTap: _pickImages,
-      child: Container(
-        height: 200,
-        width: double.infinity,
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(15),
-          border: Border.all(
-            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
-            width: 1.5,
+  Widget _buildCityDropdown(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          "City",
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: Colors.white,
           ),
         ),
-        child: _images != null && _images!.isNotEmpty
-            ? GridView.builder(
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 3,
-                  crossAxisSpacing: 5,
-                  mainAxisSpacing: 5,
+        SizedBox(height: 8),
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.07),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: DropdownButtonFormField<String>(
+            value: _selectedCity,
+            decoration: InputDecoration(
+              border: InputBorder.none,
+              contentPadding: EdgeInsets.symmetric(horizontal: 16),
+            ),
+            dropdownColor: Theme.of(context).scaffoldBackgroundColor,
+            style: TextStyle(color: Colors.white),
+            items: _availableCities.map((city) {
+              return DropdownMenuItem<String>(
+                value: city,
+                child: Text(
+                  city,
+                  style: TextStyle(color: Colors.white),
                 ),
-                itemCount: _images!.length,
-                padding: const EdgeInsets.all(8),
-                itemBuilder: (context, index) {
-                  return Stack(
-                    children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: Image.file(
-                          File(_images![index].path),
-                          fit: BoxFit.cover,
-                          height: double.infinity,
-                          width: double.infinity,
-                        ),
-                      ),
-                      Positioned(
-                        right: 0,
-                        child: GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              _images!.removeAt(index);
-                            });
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.all(2),
-                            decoration: BoxDecoration(
-                              color: Colors.red,
-                              shape: BoxShape.circle,
-                            ),
-                            child: Icon(
-                              Icons.close,
-                              size: 16,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  );
-                },
-              )
-            : Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.add_photo_alternate_outlined,
-                    size: 50,
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    "Upload Event Images",
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.primary,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
-      ),
+              );
+            }).toList(),
+            onChanged: (value) {
+              if (value != null) {
+                setState(() {
+                  _selectedCity = value;
+                });
+              }
+            },
+          ),
+        ),
+      ],
     );
   }
 
@@ -527,7 +523,7 @@ class _CreateEventPageState extends State<CreateEventPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          "Category",
+          "Categories",
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
@@ -600,16 +596,16 @@ class _CreateEventPageState extends State<CreateEventPage> {
       width: double.infinity,
       height: 55,
       child: ElevatedButton(
-        onPressed: _submitEventProposal,
+        onPressed: _isLoading ? null : _createEvent,
         style: ElevatedButton.styleFrom(
-          backgroundColor: Theme.of(context).colorScheme.secondary,
+          backgroundColor: Theme.of(context).colorScheme.primary,
           foregroundColor: Colors.white,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
         ),
         child: const Text(
-          "Send Request",
+          "Create Event",
           style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
       ),

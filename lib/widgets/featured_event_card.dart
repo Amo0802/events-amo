@@ -10,10 +10,8 @@ class FeaturedEventCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Get screen size to make layout responsive
     final Size screenSize = MediaQuery.of(context).size;
-    final double cardWidth =
-        screenSize.width < 600 ? screenSize.width * 0.8 : 300;
+    final double cardWidth = screenSize.width < 600 ? screenSize.width * 0.8 : 300;
 
     return GestureDetector(
       onTap: () {
@@ -27,7 +25,6 @@ class FeaturedEventCard extends StatelessWidget {
       child: Container(
         width: cardWidth,
         margin: EdgeInsets.all(8),
-        // Removed fixed height constraint to allow content to determine size
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20),
           gradient: LinearGradient(
@@ -37,19 +34,19 @@ class FeaturedEventCard extends StatelessWidget {
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.3),
+              color: Colors.black.withOpacity(0.3),
               blurRadius: 10,
               offset: Offset(0, 5),
             ),
           ],
         ),
         child: Column(
-          mainAxisSize: MainAxisSize.min, // Takes only needed space
+          mainAxisSize: MainAxisSize.min, // Takes minimum space needed
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Image with aspect ratio
+            // Image with fixed aspect ratio
             AspectRatio(
-              aspectRatio: 16 / 9, // Standard widescreen ratio
+              aspectRatio: 16 / 9,
               child: Stack(
                 children: [
                   ClipRRect(
@@ -61,16 +58,10 @@ class FeaturedEventCard extends StatelessWidget {
                       event.imageUrl,
                       fit: BoxFit.cover,
                       width: double.infinity,
-                      // Added error and loading handling
-                      errorBuilder:
-                          (context, error, stackTrace) => Container(
-                            color: Colors.grey[800],
-                            child: Icon(Icons.error, color: Colors.white),
-                          ),
-                      loadingBuilder: (context, child, loadingProgress) {
-                        if (loadingProgress == null) return child;
-                        return Center(child: CircularProgressIndicator());
-                      },
+                      errorBuilder: (context, error, stackTrace) => Container(
+                        color: Colors.grey[800],
+                        child: Icon(Icons.error, color: Colors.white),
+                      ),
                     ),
                   ),
                   // Gradient overlay
@@ -84,7 +75,7 @@ class FeaturedEventCard extends StatelessWidget {
                         gradient: LinearGradient(
                           colors: [
                             Colors.transparent,
-                            Colors.black.withValues(alpha: 0.7),
+                            Colors.black.withOpacity(0.7),
                           ],
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
@@ -98,14 +89,11 @@ class FeaturedEventCard extends StatelessWidget {
                     left: 10,
                     child: Container(
                       padding: EdgeInsets.symmetric(
-                        horizontal:
-                            screenSize.width * 0.02, // Responsive padding
-                        vertical: screenSize.width * 0.015,
+                        horizontal: 8,
+                        vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.secondary.withValues(alpha: 0.8),
+                        color: Theme.of(context).colorScheme.secondary.withOpacity(0.8),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
@@ -113,8 +101,7 @@ class FeaturedEventCard extends StatelessWidget {
                         style: TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
-                          // Responsive font size
-                          fontSize: screenSize.width < 600 ? 12 : 14,
+                          fontSize: 12,
                         ),
                       ),
                     ),
@@ -126,29 +113,24 @@ class FeaturedEventCard extends StatelessWidget {
                       right: 10,
                       child: Container(
                         padding: EdgeInsets.symmetric(
-                          horizontal:
-                              screenSize.width * 0.02, // Responsive padding
-                          vertical: screenSize.width * 0.01,
+                          horizontal: 8,
+                          vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.amber.withValues(alpha: 0.8),
+                          color: Colors.amber.withOpacity(0.8),
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(
-                              Icons.star,
-                              color: Colors.white,
-                              size: screenSize.width < 600 ? 12 : 14,
-                            ),
+                            Icon(Icons.star, color: Colors.white, size: 12),
                             SizedBox(width: 4),
                             Text(
                               "PROMOTED",
                               style: TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.bold,
-                                fontSize: screenSize.width < 600 ? 10 : 12,
+                                fontSize: 10,
                               ),
                             ),
                           ],
@@ -158,73 +140,83 @@ class FeaturedEventCard extends StatelessWidget {
                 ],
               ),
             ),
-            // Content
-            Padding(
-              // Dynamic padding based on screen size
-              padding: EdgeInsets.all(screenSize.width < 600 ? 12 : 15),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min, // Takes minimum space
-                children: [
-                  Text(
-                    event.name,
-                    style: TextStyle(
-                      fontSize: screenSize.width < 600 ? 18 : 20,
-                      fontWeight: FontWeight.bold,
+            // Content section with flexible height
+            Flexible(
+              child: Padding(
+                padding: EdgeInsets.all(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      event.name,
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      maxLines: 1, // Limit to 1 line
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    maxLines: 2, // Allow 2 lines for title
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  SizedBox(height: 6),
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.location_on_outlined,
-                        color: Theme.of(context).colorScheme.secondary,
-                        size: 14,
-                      ),
-                      SizedBox(width: 4),
-                      Expanded(
-                        child: Text(
-                          event.location,
-                          style: TextStyle(
-                            color: Colors.grey[400],
-                            fontSize: 14,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 5),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.only(
-                          top: 2,
-                        ), // adjust as needed for fine-tuning
-                        child: Icon(
-                          Icons.info_outline,
+                    SizedBox(height: 6),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.location_on_outlined,
                           color: Theme.of(context).colorScheme.secondary,
                           size: 14,
                         ),
-                      ),
-                      SizedBox(width: 4),
-                      Expanded(
-                        child: Text(
-                          event.description,
-                          style: TextStyle(
-                            color: Colors.grey[400],
-                            fontSize: 14,
+                        SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            event.location,
+                            style: TextStyle(
+                              color: Colors.grey[400],
+                              fontSize: 14,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
                         ),
+                      ],
+                    ),
+                    SizedBox(height: 5),
+                    Flexible(
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.only(top: 2),
+                            child: Icon(
+                              Icons.info_outline,
+                              color: Theme.of(context).colorScheme.secondary,
+                              size: 14,
+                            ),
+                          ),
+                          SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              event.description,
+                              style: TextStyle(
+                                color: Colors.grey[400],
+                                fontSize: 14,
+                              ),
+                              maxLines: 2, // Reduce to 1 line to prevent overflow
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
 
                   // Row(
                   //   children: [
@@ -244,12 +236,3 @@ class FeaturedEventCard extends StatelessWidget {
                   //     ),
                   //   ],
                   // ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}

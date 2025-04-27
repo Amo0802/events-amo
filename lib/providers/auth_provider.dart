@@ -28,6 +28,7 @@ class AuthProvider with ChangeNotifier {
   User? get currentUser => _currentUser;
   String? get error => _error;
   
+  // Make sure the isAdmin getter returns the value from the User object
   bool get isAdmin => _currentUser?.isAdmin ?? false;
   
   Future<void> _checkAuthStatus() async {
@@ -37,6 +38,7 @@ class AuthProvider with ChangeNotifier {
       if (isAuthenticated) {
         _currentUser = await _authService.getCurrentUser();
         _status = AuthStatus.authenticated;
+        print("User authenticated: ${_currentUser?.name}, isAdmin: ${_currentUser?.isAdmin}"); // Debug log
       } else {
         _status = AuthStatus.unauthenticated;
       }
@@ -90,6 +92,7 @@ class AuthProvider with ChangeNotifier {
       
       await _authService.login(request);
       _currentUser = await _authService.getCurrentUser();
+      print("Login successful - User: ${_currentUser?.name}, isAdmin: ${_currentUser?.isAdmin}"); // Debug log
       _status = AuthStatus.authenticated;
       
       notifyListeners();
@@ -138,6 +141,7 @@ class AuthProvider with ChangeNotifier {
   Future<void> refreshUser() async {
     try {
       _currentUser = await _authService.getCurrentUser();
+      print("User refreshed - isAdmin: ${_currentUser?.isAdmin}"); // Debug log
       notifyListeners();
     } catch (e) {
       _error = e.toString();

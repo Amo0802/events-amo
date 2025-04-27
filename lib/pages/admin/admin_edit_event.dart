@@ -1,58 +1,121 @@
-import 'dart:io';
 import 'package:events_amo/models/event.dart';
-import 'package:events_amo/providers/user_provider.dart';
-import 'package:events_amo/utils/single_decimal.dart';
+import 'package:events_amo/providers/event_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:image_picker/image_picker.dart';
+import 'package:events_amo/utils/single_decimal.dart';
 import 'package:multi_select_flutter/multi_select_flutter.dart';
 import 'package:provider/provider.dart';
 
-class CreateEventPage extends StatefulWidget {
-
-  const CreateEventPage({super.key});
+class AdminEditEventPage extends StatefulWidget {
+  const AdminEditEventPage({super.key});
 
   @override
-  State<CreateEventPage> createState() => _CreateEventPageState();
+  State<AdminEditEventPage> createState() => _AdminEditEventPageState();
 }
 
-class _CreateEventPageState extends State<CreateEventPage> {
+class _AdminEditEventPageState extends State<AdminEditEventPage> {
   final _formKey = GlobalKey<FormState>();
-  final ImagePicker _picker = ImagePicker();
   
   // Form fields
+  final TextEditingController _idController = TextEditingController();
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _locationController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
   final TextEditingController _priceController = TextEditingController();
+  final TextEditingController _mainImageUrlController = TextEditingController();
+  final TextEditingController _otherImagesUrlController = TextEditingController();
   
   DateTime? _selectedDate;
   TimeOfDay? _selectedTime;
   List<String> _selectedCategories = [];
-  List<XFile>? _images = [];
+  String _selectedCity = 'PODGORICA';
   
   bool _isLoading = false;
+  bool _isSearching = false;
   String? _errorMessage;
+  Event? _loadedEvent;
   
-  // Available categories
+  // Available categories and cities
   final List<String> _availableCategories = [
     'Music', 'Sports', 'Art', 'Food', 'Technology'
+  ];
+  
+  final List<String> _availableCities = [
+    'PODGORICA', 'BERANE', 'NIKSIC'
   ];
 
   @override
   void dispose() {
+    _idController.dispose();
     _titleController.dispose();
     _locationController.dispose();
     _descriptionController.dispose();
     _priceController.dispose();
+    _mainImageUrlController.dispose();
+    _otherImagesUrlController.dispose();
     super.dispose();
   }
 
-  Future<void> _pickImages() async {
-    final List<XFile> selectedImages = await _picker.pickMultiImage();
-    if (selectedImages.isNotEmpty) {
+  Future<void> _fetchEvent() async {
+    if (_idController.text.isEmpty) {
       setState(() {
-        _images = selectedImages;
+        _errorMessage = "Please enter an event ID";
+      });
+      _showSnackBar(_errorMessage!);
+      return;
+    }
+
+    final eventId = int.tryParse(_idController.text);
+    if (eventId == null) {
+      setState(() {
+        _errorMessage = "Please enter a valid event ID";
+      });
+      _showSnackBar(_errorMessage!);
+      return;
+    }
+
+    setState(() {
+      _isSearching = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final eventProvider = Provider.of<EventProvider>(context, listen: false);
+      await eventProvider.fetchEventById(eventId);
+      
+      if (eventProvider.selectedEvent == null) {
+        setState(() {
+          _errorMessage = "Event not found";
+        });
+        _showSnackBar(_errorMessage!);
+        return;
+      }
+
+      final event = eventProvider.selectedEvent!;
+      setState(() {
+        _loadedEvent = event;
+        _titleController.text = event.name;
+        _locationController.text = event.address;
+        _descriptionController.text = event.description;
+        _priceController.text = event.price.toString();
+        _mainImageUrlController.text = event.imageUrl;
+        
+        _selectedCategories = List<String>.from(event.categories);
+        _selectedCity = event.city;
+        _selectedDate = event.startDateTime;
+        _selectedTime = TimeOfDay(
+          hour: event.startDateTime.hour,
+          minute: event.startDateTime.minute,
+        );
+      });
+    } catch (e) {
+      setState(() {
+        _errorMessage = e.toString();
+      });
+      _showSnackBar(_errorMessage!);
+    } finally {
+      setState(() {
+        _isSearching = false;
       });
     }
   }
@@ -61,7 +124,7 @@ class _CreateEventPageState extends State<CreateEventPage> {
     final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: _selectedDate ?? DateTime.now(),
-      firstDate: DateTime.now(),
+      firstDate: DateTime.now().subtract(const Duration(days: 365)), // Allow past dates for editing
       lastDate: DateTime.now().add(const Duration(days: 365)),
     );
     if (picked != null && picked != _selectedDate) {
@@ -108,7 +171,15 @@ class _CreateEventPageState extends State<CreateEventPage> {
     );
   }
 
-  Future<void> _submitEventProposal() async {
+  Future<void> _updateEvent() async {
+    if (_loadedEvent == null) {
+      setState(() {
+        _errorMessage = "Please load an event first";
+      });
+      _showSnackBar(_errorMessage!);
+      return;
+    }
+
     if (_formKey.currentState?.validate() != true) {
       return;
     }
@@ -129,22 +200,12 @@ class _CreateEventPageState extends State<CreateEventPage> {
       return;
     }
 
-    // if (_images == null || _images!.isEmpty) {
-    //   setState(() {
-    //     _errorMessage = "Please upload at least one image";
-    //   });
-    //   _showSnackBar(_errorMessage!);
-    //   return;
-    // }
-
     setState(() {
       _isLoading = true;
       _errorMessage = null;
     });
 
-      // Create multipart request
-      final userProvider = Provider.of<UserProvider>(context, listen: false);
-      
+    try {
       // Combine date and time into a single DateTime
       final DateTime eventDateTime = DateTime(
         _selectedDate!.year,
@@ -154,37 +215,54 @@ class _CreateEventPageState extends State<CreateEventPage> {
         _selectedTime!.minute,
       );
 
-      // Add text fields
-      final event = Event.forSubmission(
+      // Create updated event object
+      final updatedEvent = Event(
+        id: _loadedEvent!.id,
         name: _titleController.text,
         description: _descriptionController.text,
+        imageUrl: _mainImageUrlController.text,
+        city: _selectedCity,
         address: _locationController.text,
         startDateTime: eventDateTime,
         price: double.tryParse(_priceController.text) ?? 0.0,
         categories: _selectedCategories,
+        mainEvent: _loadedEvent!.mainEvent,
+        promoted: _loadedEvent!.promoted,
+        eventSaved: _loadedEvent!.eventSaved,
+        eventAttending: _loadedEvent!.eventAttending,
       );
 
-      // Add image files
-      bool success = await userProvider.submitEventProposal(event, _images!);
+      // Update the event
+      final eventProvider = Provider.of<EventProvider>(context, listen: false);
+      final success = await eventProvider.updateEvent(_loadedEvent!.id, updatedEvent);
 
       if (success) {
-        _showSuccessDialog();
+        _showSuccessDialog("Event updated successfully");
       } else {
         setState(() {
-          _errorMessage = userProvider.error;
-          _isLoading = false;
+          _errorMessage = eventProvider.error ?? "Failed to update event";
         });
         _showSnackBar(_errorMessage!);
       }
+    } catch (e) {
+      setState(() {
+        _errorMessage = e.toString();
+      });
+      _showSnackBar(_errorMessage!);
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
   }
 
-  void _showSuccessDialog() {
+  void _showSuccessDialog(String message) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text("Success"),
-          content: const Text("Your event proposal has been submitted successfully. We will review it shortly."),
+          content: Text(message),
           actions: [
             TextButton(
               child: const Text("OK"),
@@ -212,7 +290,7 @@ class _CreateEventPageState extends State<CreateEventPage> {
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
         title: Text(
-          "Create Event Request",
+          "Edit Event (Admin)",
           style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
         ),
       ),
@@ -225,73 +303,110 @@ class _CreateEventPageState extends State<CreateEventPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildImagePicker(context),
+                    _buildSearchEventSection(context),
                     const SizedBox(height: 20),
-                    _buildTextField(
-                      controller: _titleController,
-                      label: "Event Title",
-                      hint: "Enter event title",
-                      inputFormatters: [LengthLimitingTextInputFormatter(50)],
-                      maxLength: 50,  
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter an event title';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 20),
-                    _buildTextField(
-                      controller: _locationController,
-                      label: "Location",
-                      hint: "Enter event location",
-                      inputFormatters: [LengthLimitingTextInputFormatter(50)],
-                      maxLength: 50, 
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter an event location';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 20),
-                    _buildTextField(
-                      controller: _priceController,
-                      label: "Price",
-                      hint: "Enter event price",
-                      maxLength: 10,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter an event price';
-                        }
-                        return null;
-                      },
-                      keyboardType: TextInputType.numberWithOptions(decimal: true),
-                        inputFormatters: [
-                        LengthLimitingTextInputFormatter(10),
-                        FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}')),
-                        SingleDecimalInputFormatter(),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-                    _buildDateTimePicker(context),
-                    const SizedBox(height: 20),
-                    _buildCategoryPicker(context),
-                    const SizedBox(height: 20),
-                    _buildTextField(
-                      controller: _descriptionController,
-                      label: "Description",
-                      hint: "Enter event description",
-                      maxLines: 5,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter an event description';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 30),
-                    _buildSubmitButton(context),
+                    if (_loadedEvent != null) ...[
+                      _buildTextField(
+                        controller: _titleController,
+                        label: "Event Title",
+                        hint: "Enter event title",
+                        inputFormatters: [LengthLimitingTextInputFormatter(50)],
+                        maxLength: 50,  
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter an event title';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 20),
+                      _buildCityDropdown(context),
+                      const SizedBox(height: 20),
+                      _buildTextField(
+                        controller: _locationController,
+                        label: "Location",
+                        hint: "Enter event location",
+                        inputFormatters: [LengthLimitingTextInputFormatter(50)],
+                        maxLength: 50, 
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter an event location';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 20),
+                      _buildTextField(
+                        controller: _priceController,
+                        label: "Price",
+                        hint: "Enter event price",
+                        maxLength: 10,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter an event price';
+                          }
+                          return null;
+                        },
+                        keyboardType: TextInputType.numberWithOptions(decimal: true),
+                          inputFormatters: [
+                          LengthLimitingTextInputFormatter(10),
+                          FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}')),
+                          SingleDecimalInputFormatter(),
+                        ],
+                      ),
+                      const SizedBox(height: 20),
+                      _buildDateTimePicker(context),
+                      const SizedBox(height: 20),
+                      _buildCategoryPicker(context),
+                      const SizedBox(height: 20),
+                      _buildTextField(
+                        controller: _mainImageUrlController,
+                        label: "Main Image URL",
+                        hint: "Enter URL for main event image",
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter a URL for the main image';
+                          }
+                          if (!Uri.tryParse(value)!.isAbsolute) {
+                            return 'Please enter a valid URL';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 20),
+                      _buildTextField(
+                        controller: _otherImagesUrlController,
+                        label: "Other Image URLs (optional)",
+                        hint: "Enter URLs separated by commas",
+                        validator: (value) {
+                          if (value != null && value.isNotEmpty) {
+                            final urls = value.split(',');
+                            for (final url in urls) {
+                              final trimmedUrl = url.trim();
+                              if (trimmedUrl.isNotEmpty && !Uri.tryParse(trimmedUrl)!.isAbsolute) {
+                                return 'Please enter valid URLs separated by commas';
+                              }
+                            }
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 20),
+                      _buildTextField(
+                        controller: _descriptionController,
+                        label: "Description",
+                        hint: "Enter event description",
+                        maxLines: 5,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter an event description';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 30),
+                      _buildSubmitButton(context),
+                    ],
                     const SizedBox(height: 20),
                   ],
                 ),
@@ -300,87 +415,109 @@ class _CreateEventPageState extends State<CreateEventPage> {
     );
   }
 
-  Widget _buildImagePicker(BuildContext context) {
-    return GestureDetector(
-      onTap: _pickImages,
-      child: Container(
-        height: 200,
-        width: double.infinity,
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(15),
-          border: Border.all(
-            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
-            width: 1.5,
+  Widget _buildSearchEventSection(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          "Event ID",
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: Colors.white,
           ),
         ),
-        child: _images != null && _images!.isNotEmpty
-            ? GridView.builder(
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 3,
-                  crossAxisSpacing: 5,
-                  mainAxisSpacing: 5,
+        SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(
+              child: TextFormField(
+                controller: _idController,
+                keyboardType: TextInputType.number,
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                decoration: InputDecoration(
+                  hintText: "Enter event ID to edit",
+                  hintStyle: TextStyle(color: Colors.grey[500]),
+                  fillColor: Colors.white.withOpacity(0.07),
+                  filled: true,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                 ),
-                itemCount: _images!.length,
-                padding: const EdgeInsets.all(8),
-                itemBuilder: (context, index) {
-                  return Stack(
-                    children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: Image.file(
-                          File(_images![index].path),
-                          fit: BoxFit.cover,
-                          height: double.infinity,
-                          width: double.infinity,
-                        ),
-                      ),
-                      Positioned(
-                        right: 0,
-                        child: GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              _images!.removeAt(index);
-                            });
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.all(2),
-                            decoration: BoxDecoration(
-                              color: Colors.red,
-                              shape: BoxShape.circle,
-                            ),
-                            child: Icon(
-                              Icons.close,
-                              size: 16,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  );
-                },
-              )
-            : Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.add_photo_alternate_outlined,
-                    size: 50,
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    "Upload Event Images",
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.primary,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
+                style: const TextStyle(color: Colors.white),
               ),
-      ),
+            ),
+            SizedBox(width: 10),
+            ElevatedButton(
+              onPressed: _isSearching ? null : _fetchEvent,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Theme.of(context).colorScheme.secondary,
+                padding: EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: _isSearching 
+                ? SizedBox(
+                    height: 24,
+                    width: 24,
+                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                  ) 
+                : Text("Load Event"),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCityDropdown(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          "City",
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: Colors.white,
+          ),
+        ),
+        SizedBox(height: 8),
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.07),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: DropdownButtonFormField<String>(
+            value: _selectedCity,
+            decoration: InputDecoration(
+              border: InputBorder.none,
+              contentPadding: EdgeInsets.symmetric(horizontal: 16),
+            ),
+            dropdownColor: Theme.of(context).scaffoldBackgroundColor,
+            style: TextStyle(color: Colors.white),
+            items: _availableCities.map((city) {
+              return DropdownMenuItem<String>(
+                value: city,
+                child: Text(
+                  city,
+                  style: TextStyle(color: Colors.white),
+                ),
+              );
+            }).toList(),
+            onChanged: (value) {
+              if (value != null) {
+                setState(() {
+                  _selectedCity = value;
+                });
+              }
+            },
+          ),
+        ),
+      ],
     );
   }
 
@@ -527,7 +664,7 @@ class _CreateEventPageState extends State<CreateEventPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          "Category",
+          "Categories",
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
@@ -600,7 +737,7 @@ class _CreateEventPageState extends State<CreateEventPage> {
       width: double.infinity,
       height: 55,
       child: ElevatedButton(
-        onPressed: _submitEventProposal,
+        onPressed: _isLoading ? null : _updateEvent,
         style: ElevatedButton.styleFrom(
           backgroundColor: Theme.of(context).colorScheme.secondary,
           foregroundColor: Colors.white,
@@ -609,7 +746,7 @@ class _CreateEventPageState extends State<CreateEventPage> {
           ),
         ),
         child: const Text(
-          "Send Request",
+          "Update Event",
           style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
       ),

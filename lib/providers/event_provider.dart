@@ -1,8 +1,7 @@
-import 'package:events_amo/providers/auth_provider.dart';
-import 'package:events_amo/providers/user_provider.dart';
-import 'package:events_amo/services/navigation_service.dart';
+// import 'package:events_amo/providers/user_provider.dart';
+// import 'package:events_amo/services/navigation_service.dart';
 import 'package:flutter/foundation.dart';
-import 'package:provider/provider.dart';
+// import 'package:provider/provider.dart';
 import '../models/event.dart';
 import '../models/page_response.dart';
 import '../services/event_service.dart';
@@ -102,16 +101,12 @@ class EventProvider with ChangeNotifier {
       _error = null;
       notifyListeners();
 
-      final result = await _eventService.getFilteredEvents(
+      _filteredEvents = await _eventService.getFilteredEvents(
         city,
         category,
         page: page,
         size: size,
       );
-      _filteredEvents = result;
-
-      // Now, after fetching events, update them with user's saved/attending status
-      await _updateEventsWithUserStatus(_filteredEvents);
 
       _isLoading = false;
       notifyListeners();
@@ -140,9 +135,6 @@ class EventProvider with ChangeNotifier {
         page: page,
         size: size,
       );
-
-      // Using NavigationService approach
-      await _updateEventsWithUserStatus(_searchResults);
 
       _isLoading = false;
       notifyListeners();
@@ -252,59 +244,59 @@ class EventProvider with ChangeNotifier {
     }
   }
 
-  // Improved patchLocalEvent method that updates events in all locations
-  void patchLocalEvent(Event updatedEvent) {
-    bool hasUpdated = false;
+  // // Improved patchLocalEvent method that updates events in all locations
+  // void patchLocalEvent(Event updatedEvent) {
+  //   bool hasUpdated = false;
 
-    // Helper function to update event in a list
-    void updateEventInList(List<Event>? events) {
-      if (events == null || events.isEmpty) return;
+  //   // Helper function to update event in a list
+  //   void updateEventInList(List<Event>? events) {
+  //     if (events == null || events.isEmpty) return;
 
-      final index = events.indexWhere((e) => e.id == updatedEvent.id);
-      if (index != -1) {
-        events[index] = updatedEvent;
-        hasUpdated = true;
-      }
-    }
+  //     final index = events.indexWhere((e) => e.id == updatedEvent.id);
+  //     if (index != -1) {
+  //       events[index] = updatedEvent;
+  //       hasUpdated = true;
+  //     }
+  //   }
 
-    // Helper function to update event in a PageResponse
-    void updateEventInPageResponse(PageResponse<Event>? page) {
-      if (page == null) return;
-      updateEventInList(page.content);
-    }
+  //   // Helper function to update event in a PageResponse
+  //   void updateEventInPageResponse(PageResponse<Event>? page) {
+  //     if (page == null) return;
+  //     updateEventInList(page.content);
+  //   }
 
-    // Update in all possible locations
-    updateEventInPageResponse(_events);
-    updateEventInPageResponse(_mainEvents);
-    updateEventInPageResponse(_promotedEvents);
-    updateEventInPageResponse(_filteredEvents);
-    updateEventInPageResponse(_searchResults);
+  //   // Update in all possible locations
+  //   updateEventInPageResponse(_events);
+  //   updateEventInPageResponse(_mainEvents);
+  //   updateEventInPageResponse(_promotedEvents);
+  //   updateEventInPageResponse(_filteredEvents);
+  //   updateEventInPageResponse(_searchResults);
 
-    // Update in UserProvider lists if needed
-    final context = NavigationService.navigatorKey.currentContext;
-    if (context != null) {
-      try {
-        final userProvider = Provider.of<UserProvider>(context, listen: false);
-        // Update in saved events
-        updateEventInList(userProvider.savedEvents);
-        // Update in attending events
-        updateEventInList(userProvider.attendingEvents);
-      } catch (e) {
-        print('Error updating UserProvider lists: $e');
-        // If there's an error (like Provider not found), continue without failing
-      }
-    }
+  //   // Update in UserProvider lists if needed
+  //   final context = NavigationService.navigatorKey.currentContext;
+  //   if (context != null) {
+  //     try {
+  //       final userProvider = Provider.of<UserProvider>(context, listen: false);
+  //       // Update in saved events
+  //       updateEventInList(userProvider.savedEvents);
+  //       // Update in attending events
+  //       updateEventInList(userProvider.attendingEvents);
+  //     } catch (e) {
+  //       print('Error updating UserProvider lists: $e');
+  //       // If there's an error (like Provider not found), continue without failing
+  //     }
+  //   }
 
-    // Update selected event if it matches
-    if (_selectedEvent?.id == updatedEvent.id) {
-      _selectedEvent = updatedEvent;
-      hasUpdated = true;
-    }
+  //   // Update selected event if it matches
+  //   if (_selectedEvent?.id == updatedEvent.id) {
+  //     _selectedEvent = updatedEvent;
+  //     hasUpdated = true;
+  //   }
 
-    if (hasUpdated) {
-      notifyListeners();
-    }
-  }
+  //   if (hasUpdated) {
+  //     notifyListeners();
+  //   }
+  // }
 
   // Helper method to clear errors
   void clearError() {
@@ -325,96 +317,55 @@ class EventProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> _updateEventsWithUserStatus(
-    PageResponse<Event>? pageResponse,
-  ) async {
-    if (pageResponse == null || pageResponse.content.isEmpty) return;
+  // void updateSearchResults(PageResponse<Event> results) {
+  //   _searchResults = results;
+  //   notifyListeners();
+  // }
 
-    try {
-      final context = NavigationService.navigatorKey.currentContext;
-      if (context == null) return;
-
-      final userProvider = Provider.of<UserProvider>(context, listen: false);
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
-
-      // Only proceed if user is authenticated
-      if (authProvider.status != AuthStatus.authenticated) return;
-
-      // Fetch user's saved and attending events if not already loaded
-      if (userProvider.savedEvents.isEmpty) {
-        await userProvider.fetchSavedEvents();
-      }
-      if (userProvider.attendingEvents.isEmpty) {
-        await userProvider.fetchAttendingEvents();
-      }
-
-      // Create sets of IDs for faster lookup
-      final savedEventIds = userProvider.savedEvents.map((e) => e.id).toSet();
-      final attendingEventIds =
-          userProvider.attendingEvents.map((e) => e.id).toSet();
-
-      // Update each event with proper status
-      for (var i = 0; i < pageResponse.content.length; i++) {
-        final event = pageResponse.content[i];
-        pageResponse.content[i] = event.copyWith(
-          eventSaved: savedEventIds.contains(event.id),
-          eventAttending: attendingEventIds.contains(event.id),
-        );
-      }
-    } catch (e) {
-      print('Error updating events with user status: $e');
-    }
-  }
-
-  void updateSearchResults(PageResponse<Event> results) {
-    _searchResults = results;
-    notifyListeners();
-  }
-
-    // Add this method to EventProvider
-  void resetEventStatuses() {
-    bool hasUpdated = false;
+  //   // Add this method to EventProvider
+  // void resetEventStatuses() {
+  //   bool hasUpdated = false;
     
-    // Helper function to reset status in a list
-    void resetStatusInList(List<Event>? events) {
-      if (events == null || events.isEmpty) return;
+  //   // Helper function to reset status in a list
+  //   void resetStatusInList(List<Event>? events) {
+  //     if (events == null || events.isEmpty) return;
       
-      for (var i = 0; i < events.length; i++) {
-        final event = events[i];
-        if (event.eventSaved || event.eventAttending) {
-          events[i] = event.copyWith(
-            eventSaved: false,
-            eventAttending: false
-          );
-          hasUpdated = true;
-        }
-      }
-    }
+  //     for (var i = 0; i < events.length; i++) {
+  //       final event = events[i];
+  //       if (event.eventSaved || event.eventAttending) {
+  //         events[i] = event.copyWith(
+  //           eventSaved: false,
+  //           eventAttending: false
+  //         );
+  //         hasUpdated = true;
+  //       }
+  //     }
+  //   }
     
-    // Helper function to reset status in a PageResponse
-    void resetStatusInPageResponse(PageResponse<Event>? page) {
-      if (page == null) return;
-      resetStatusInList(page.content);
-    }
+  //   // Helper function to reset status in a PageResponse
+  //   void resetStatusInPageResponse(PageResponse<Event>? page) {
+  //     if (page == null) return;
+  //     resetStatusInList(page.content);
+  //   }
     
-    // Reset in all locations
-    resetStatusInPageResponse(_events);
-    resetStatusInPageResponse(_mainEvents);
-    resetStatusInPageResponse(_promotedEvents);
-    resetStatusInPageResponse(_filteredEvents);
-    resetStatusInPageResponse(_searchResults);
+  //   // Reset in all locations
+  //   resetStatusInPageResponse(_events);
+  //   resetStatusInPageResponse(_mainEvents);
+  //   resetStatusInPageResponse(_promotedEvents);
+  //   resetStatusInPageResponse(_filteredEvents);
+  //   resetStatusInPageResponse(_searchResults);
     
-    // Reset selected event if needed
-    if (_selectedEvent != null && (_selectedEvent!.eventSaved || _selectedEvent!.eventAttending)) {
-      _selectedEvent = _selectedEvent!.copyWith(
-        eventSaved: false,
-        eventAttending: false
-      );
-      hasUpdated = true;
-    }
+  //   // Reset selected event if needed
+  //   if (_selectedEvent != null && (_selectedEvent!.eventSaved || _selectedEvent!.eventAttending)) {
+  //     _selectedEvent = _selectedEvent!.copyWith(
+  //       eventSaved: false,
+  //       eventAttending: false
+  //     );
+  //     hasUpdated = true;
+  //   }
     
-    if (hasUpdated) {
-      notifyListeners();
-    }
-  }
+  //   if (hasUpdated) {
+  //     notifyListeners();
+  //   }
+  // }
 }

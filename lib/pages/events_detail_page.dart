@@ -1,7 +1,6 @@
 import 'package:events_amo/models/event.dart';
 import 'package:events_amo/pages/login_page.dart';
 import 'package:events_amo/providers/auth_provider.dart';
-import 'package:events_amo/providers/event_provider.dart';
 import 'package:events_amo/providers/user_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -17,22 +16,12 @@ class EventDetailPage extends StatefulWidget {
 }
 
 class EventDetailPageState extends State<EventDetailPage> {
-  late bool isSaved;
-  late bool isAttending;
   bool isExpanded = false;
   bool _isProcessing = false;
 
-  @override
-  void initState() {
-    super.initState();
-    isSaved = widget.event.eventSaved;
-    isAttending = widget.event.eventAttending;
-  }
-
-  void _toggleSave() {
+  void _toggleSave(bool isSaved) {
     final userProvider = Provider.of<UserProvider>(context, listen: false);
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final eventProvider = Provider.of<EventProvider>(context, listen: false);
 
     // Check if user is logged in
     if (authProvider.status != AuthStatus.authenticated) {
@@ -47,21 +36,10 @@ class EventDetailPageState extends State<EventDetailPage> {
     });
 
     userProvider
-        .toggleSaveEvent(widget.event.id, isSaved)
-        .then((success) {
-          if (success) {
-            setState(() {
-              isSaved = !isSaved;
-              
-              // Create updated event with new status
-              final updatedEvent = widget.event.copyWith(
-                eventSaved: isSaved
-              );
-              
-              // Update the event in all locations
-              eventProvider.patchLocalEvent(updatedEvent);
-            });
-          }
+        .toggleSaveEvent(widget.event, isSaved)
+        .then((_) {
+          // Force UI update
+          setState(() {});
         })
         .whenComplete(() {
           setState(() {
@@ -70,10 +48,9 @@ class EventDetailPageState extends State<EventDetailPage> {
         });
   }
 
-  void _toggleAttend() {
+  void _toggleAttend(bool isAttending) {
     final userProvider = Provider.of<UserProvider>(context, listen: false);
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final eventProvider = Provider.of<EventProvider>(context, listen: false);
 
     // Check if user is logged in
     if (authProvider.status != AuthStatus.authenticated) {
@@ -88,21 +65,10 @@ class EventDetailPageState extends State<EventDetailPage> {
     });
 
     userProvider
-        .toggleAttendEvent(widget.event.id, isAttending)
-        .then((success) {
-          if (success) {
-            setState(() {
-              isAttending = !isAttending;
-              
-              // Create updated event with new status
-              final updatedEvent = widget.event.copyWith(
-                eventAttending: isAttending
-              );
-              
-              // Update the event in all locations
-              eventProvider.patchLocalEvent(updatedEvent);
-            });
-          }
+        .toggleAttendEvent(widget.event, isAttending)
+        .then((_) {
+          // Force UI update
+          setState(() {});
         })
         .whenComplete(() {
           setState(() {
@@ -113,10 +79,18 @@ class EventDetailPageState extends State<EventDetailPage> {
 
   @override
   Widget build(BuildContext context) {
+    // Get current status from UserProvider
+    final userProvider = Provider.of<UserProvider>(context);
+    final authProvider = Provider.of<AuthProvider>(context);
+    
+    final bool isLoggedIn = authProvider.status == AuthStatus.authenticated;
+    final bool isSaved = isLoggedIn && userProvider.isEventSaved(widget.event);
+    final bool isAttending = isLoggedIn && userProvider.isEventAttending(widget.event);
+    
     return Scaffold(
       body: CustomScrollView(
         slivers: [
-          _buildAppBar(context),
+          _buildAppBar(context, isSaved),
           SliverToBoxAdapter(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -130,22 +104,16 @@ class EventDetailPageState extends State<EventDetailPage> {
           ),
         ],
       ),
-      bottomNavigationBar: _buildAttendButton(context),
+      bottomNavigationBar: _buildAttendButton(context, isAttending),
     );
   }
 
   @override
   void dispose() {
-    // Return the updated event when navigating back
-    Navigator.of(context).pop(widget.event.copyWith(
-      eventSaved: isSaved,
-      eventAttending: isAttending,
-    ));
     super.dispose();
   }
 
-
-  Widget _buildAppBar(BuildContext context) {
+  Widget _buildAppBar(BuildContext context, bool isSaved) {
     return SliverAppBar(
       expandedHeight: 240,
       pinned: true,
@@ -197,14 +165,7 @@ class EventDetailPageState extends State<EventDetailPage> {
         ),
       ),
       leading: InkWell(
-        onTap:
-            () => Navigator.pop(
-              context,
-              widget.event.copyWith(
-                eventSaved: isSaved,
-                eventAttending: isAttending,
-              ),
-            ),
+        onTap: () => Navigator.pop(context),
         child: Container(
           margin: EdgeInsets.only(left: 16, top: 16),
           decoration: BoxDecoration(
@@ -215,22 +176,6 @@ class EventDetailPageState extends State<EventDetailPage> {
         ),
       ),
       actions: [
-        // Container(
-        //   margin: EdgeInsets.only(right: 16, top: 16),
-        //   decoration: BoxDecoration(
-        //     color: Colors.black.withOpacity(0.4),
-        //     shape: BoxShape.circle,
-        //   ),
-        //   child: IconButton(
-        //     icon: Icon(
-        //       Icons.share_outlined,
-        //       color: Colors.white,
-        //     ),
-        //     onPressed: () {
-        //       // Share event
-        //     },
-        //   ),
-        // ),
         Container(
           margin: EdgeInsets.only(right: 16, top: 16),
           decoration: BoxDecoration(
@@ -242,7 +187,7 @@ class EventDetailPageState extends State<EventDetailPage> {
               isSaved ? Icons.bookmark : Icons.bookmark_border,
               color: Colors.white,
             ),
-            onPressed: _toggleSave,
+            onPressed: () => _toggleSave(isSaved),
           ),
         ),
       ],
@@ -350,7 +295,7 @@ class EventDetailPageState extends State<EventDetailPage> {
     );
   }
 
-  Widget _buildAttendButton(BuildContext context) {
+  Widget _buildAttendButton(BuildContext context, bool isAttending) {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       decoration: BoxDecoration(
@@ -367,7 +312,7 @@ class EventDetailPageState extends State<EventDetailPage> {
         child: SizedBox(
           height: 55,
           child: ElevatedButton(
-            onPressed: _toggleAttend,
+            onPressed: () => _toggleAttend(isAttending),
             style: ElevatedButton.styleFrom(
               backgroundColor:
                   isAttending

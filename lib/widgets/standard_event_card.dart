@@ -1,9 +1,7 @@
 import 'package:events_amo/models/event.dart';
 import 'package:events_amo/pages/events_detail_page.dart';
-import 'package:events_amo/providers/event_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:provider/provider.dart';
 
 class StandardEventCard extends StatelessWidget {
   final Event event;
@@ -32,15 +30,7 @@ class StandardEventCard extends StatelessWidget {
             MaterialPageRoute(
               builder: (context) => EventDetailPage(event: event),
             ),
-          ).then((updatedEvent) {
-            if (updatedEvent != null && updatedEvent is Event) {
-              final eventProvider = Provider.of<EventProvider>(
-                context,
-                listen: false,
-              );
-              eventProvider.patchLocalEvent(updatedEvent);
-            }
-          });
+          );
         },
         borderRadius: BorderRadius.circular(15),
         child: Row(

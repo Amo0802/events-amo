@@ -1,5 +1,5 @@
 import 'package:events_amo/pages/admin/admin_create_event_menu.dart';
-import 'package:events_amo/pages/comunity_events_page.dart';
+import 'package:events_amo/pages/community_events_page.dart';
 import 'package:events_amo/pages/home_page.dart';
 import 'package:events_amo/pages/login_page.dart';
 import 'package:events_amo/pages/profile_page.dart';

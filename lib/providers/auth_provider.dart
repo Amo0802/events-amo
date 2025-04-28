@@ -1,4 +1,4 @@
-import 'package:events_amo/providers/event_provider.dart';
+import 'package:events_amo/providers/user_provider.dart';
 import 'package:events_amo/services/navigation_service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:provider/provider.dart';
@@ -106,37 +106,29 @@ class AuthProvider with ChangeNotifier {
     }
   }
   
-  Future<void> logout() async {
-    try {
-      // Get eventProvider reference before any async operations
-      final context = NavigationService.navigatorKey.currentContext;
-      EventProvider? eventProvider;
-      
-      if (context != null) {
-        try {
-          eventProvider = Provider.of<EventProvider>(context, listen: false);
-        } catch (e) {
-          print('Error getting EventProvider: $e');
-        }
+Future<void> logout() async {
+  try {
+    // Clear user data
+    final context = NavigationService.navigatorKey.currentContext;
+    if (context != null) {
+      try {
+        final userProvider = Provider.of<UserProvider>(context, listen: false);
+        userProvider.clear();
+      } catch (e) {
+        print('Error getting UserProvider: $e');
       }
-      
-      // Perform async logout operation
-      await _authService.logout();
-      _currentUser = null;
-      _status = AuthStatus.unauthenticated;
-      
-      // Reset event statuses after logout completes
-      if (eventProvider != null) {
-        eventProvider.resetEventStatuses();
-      }
-    } catch (e) {
-      _error = e.toString();
-      print('Error during logout: $_error');
-      // Still set to unauthenticated even if there's an error
-      _status = AuthStatus.unauthenticated;
     }
-    notifyListeners();
+    
+    await _authService.logout();
+    _currentUser = null;
+    _status = AuthStatus.unauthenticated;
+  } catch (e) {
+    _error = e.toString();
+    print('Error during logout: $_error');
+    _status = AuthStatus.unauthenticated;
   }
+  notifyListeners();
+}
   
   Future<void> refreshUser() async {
     try {

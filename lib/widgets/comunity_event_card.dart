@@ -2,7 +2,6 @@ import 'package:events_amo/models/event.dart';
 import 'package:events_amo/pages/events_detail_page.dart';
 import 'package:events_amo/pages/login_page.dart';
 import 'package:events_amo/providers/auth_provider.dart';
-import 'package:events_amo/providers/event_provider.dart';
 import 'package:events_amo/providers/user_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -18,78 +17,29 @@ class CommunityEventCard extends StatefulWidget {
 }
 
 class _CommunityEventCardState extends State<CommunityEventCard> {
-  late bool isAttending;
-  late bool isSaved;
   bool _isProcessing = false;
 
-  @override
-  void initState() {
-    super.initState();
-    isAttending = widget.event.eventAttending;
-    isSaved = widget.event.eventSaved;
-  }
-
-  @override
-  void didUpdateWidget(CommunityEventCard oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    // Update local state if the event changes
-    if (oldWidget.event.id != widget.event.id ||
-        oldWidget.event.eventSaved != widget.event.eventSaved ||
-        oldWidget.event.eventAttending != widget.event.eventAttending) {
-      setState(() {
-        isSaved = widget.event.eventSaved;
-        isAttending = widget.event.eventAttending;
-      });
-    }
-  }
-
-  void _toggleAttend() {
+  void _toggleSave(bool isSaved) {
     final userProvider = Provider.of<UserProvider>(context, listen: false);
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final eventProvider = Provider.of<EventProvider>(context, listen: false);
 
     // Check if user is logged in
     if (authProvider.status != AuthStatus.authenticated) {
-      // Navigate to login page if not authenticated
-      Navigator.of(
-        context,
-      ).push(MaterialPageRoute(builder: (_) => LoginPage()));
+      Navigator.of(context).push(MaterialPageRoute(builder: (_) => LoginPage()));
       return;
     }
 
-    // Prevent multiple simultaneous requests
     if (_isProcessing) return;
 
     setState(() {
       _isProcessing = true;
     });
 
-    // Call the toggle method from UserProvider
     userProvider
-        .toggleAttendEvent(widget.event.id, isAttending)
-        .then((success) {
-          if (success) {
-            setState(() {
-              isAttending = !isAttending;
-
-              // Create updated event with new status
-              final updatedEvent = widget.event.copyWith(
-                eventAttending: isAttending,
-              );
-
-              // Update the event in all locations
-              eventProvider.patchLocalEvent(updatedEvent);
-            });
-          } else {
-            // Show error message if failed
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                  userProvider.error ?? 'Failed to update attendance',
-                ),
-              ),
-            );
-          }
+        .toggleSaveEvent(widget.event, isSaved)
+        .then((_) {
+          // Force UI update
+          setState(() {});
         })
         .whenComplete(() {
           setState(() {
@@ -98,16 +48,13 @@ class _CommunityEventCardState extends State<CommunityEventCard> {
         });
   }
 
-  void _toggleSave() {
+  void _toggleAttend(bool isAttending) {
     final userProvider = Provider.of<UserProvider>(context, listen: false);
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final eventProvider = Provider.of<EventProvider>(context, listen: false);
 
-    // Check if user is logged in first
+    // Check if user is logged in
     if (authProvider.status != AuthStatus.authenticated) {
-      Navigator.of(
-        context,
-      ).push(MaterialPageRoute(builder: (_) => LoginPage()));
+      Navigator.of(context).push(MaterialPageRoute(builder: (_) => LoginPage()));
       return;
     }
 
@@ -118,19 +65,10 @@ class _CommunityEventCardState extends State<CommunityEventCard> {
     });
 
     userProvider
-        .toggleSaveEvent(widget.event.id, isSaved)
-        .then((success) {
-          if (success) {
-            setState(() {
-              isSaved = !isSaved;
-
-              // Create updated event with new status
-              final updatedEvent = widget.event.copyWith(eventSaved: isSaved);
-
-              // Update the event in all locations
-              eventProvider.patchLocalEvent(updatedEvent);
-            });
-          }
+        .toggleAttendEvent(widget.event, isAttending)
+        .then((_) {
+          // Force UI update
+          setState(() {});
         })
         .whenComplete(() {
           setState(() {
@@ -141,8 +79,14 @@ class _CommunityEventCardState extends State<CommunityEventCard> {
 
   @override
   Widget build(BuildContext context) {
-    Provider.of<UserProvider>(context, listen: false);
-    final eventProvider = context.read<EventProvider>();
+    // Get current status from UserProvider 
+    final userProvider = Provider.of<UserProvider>(context);
+    final authProvider = Provider.of<AuthProvider>(context);
+    
+    final bool isLoggedIn = authProvider.status == AuthStatus.authenticated;
+    final bool isSaved = isLoggedIn && userProvider.isEventSaved(widget.event);
+    final bool isAttending = isLoggedIn && userProvider.isEventAttending(widget.event);
+    
     return GestureDetector(
       onTap: () {
         Navigator.push(
@@ -150,14 +94,7 @@ class _CommunityEventCardState extends State<CommunityEventCard> {
           MaterialPageRoute(
             builder: (context) => EventDetailPage(event: widget.event),
           ),
-        ).then((updatedEvent) {
-          // Refresh event status if needed
-          if (updatedEvent != null && updatedEvent is Event) {
-            eventProvider.patchLocalEvent(
-              updatedEvent,
-            ); // <-- only update that one
-          }
-        });
+        );
       },
       child: Container(
         margin: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
@@ -297,50 +234,16 @@ class _CommunityEventCardState extends State<CommunityEventCard> {
                       ),
                     ],
                   ),
-                  // SizedBox(height: 6),
-                  // Row(
-                  //   children: [
-                  //     Icon(
-                  //       Icons.person_outline,
-                  //       color: Theme.of(context).colorScheme.secondary,
-                  //       size: 16,
-                  //     ),
-                  //     SizedBox(width: 4),
-                  //     Text(
-                  //       "By $organizer",
-                  //       style: TextStyle(
-                  //         color: Colors.grey[400],
-                  //         fontSize: 14,
-                  //       ),
-                  //     ),
-                  // Spacer(),
-                  // Icon(
-                  //   Icons.people_outline,
-                  //   color: Theme.of(context).colorScheme.secondary,
-                  //   size: 16,
-                  // ),
-                  // SizedBox(width: 4),
-                  // Text(
-                  //   "$attendees attending",
-                  //   style: TextStyle(
-                  //     color: Colors.grey[400],
-                  //     fontSize: 14,
-                  //   ),
-                  // ),
-                  //   ],
-                  // ),
                   SizedBox(height: 15),
                   Row(
                     children: [
                       Expanded(
-                        child: // Update the attend button in build method
-                            ElevatedButton(
-                          onPressed: _isProcessing ? null : _toggleAttend,
+                        child: ElevatedButton(
+                          onPressed: _isProcessing ? null : () => _toggleAttend(isAttending),
                           style: ElevatedButton.styleFrom(
                             backgroundColor:
                                 isAttending
-                                    ? Colors
-                                        .grey[700] // Different color when attending
+                                    ? Colors.grey[700]
                                     : Theme.of(context).colorScheme.secondary,
                             foregroundColor: Colors.white,
                             shape: RoundedRectangleBorder(
@@ -366,7 +269,7 @@ class _CommunityEventCardState extends State<CommunityEventCard> {
                                   ? Theme.of(context).colorScheme.tertiary
                                   : Colors.grey[400],
                         ),
-                        onPressed: _isProcessing ? null : _toggleSave,
+                        onPressed: _isProcessing ? null : () => _toggleSave(isSaved),
                       ),
                     ],
                   ),

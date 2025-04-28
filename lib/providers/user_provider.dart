@@ -54,18 +54,16 @@ class UserProvider with ChangeNotifier {
     }
   }
   
-  Future<bool> toggleSaveEvent(int eventId, bool currentSavedStatus) async {
+  Future<bool> toggleSaveEvent(Event event, bool currentSavedStatus) async {
     try {
       _isLoading = true;
       notifyListeners();
       
       if (currentSavedStatus) {
-        await _userService.unsaveEvent(eventId);
-        _savedEvents.removeWhere((event) => event.id == eventId);
+        await _userService.unsaveEvent(event.id);
+        _savedEvents.remove(event);
       } else {
-        await _userService.saveEvent(eventId);
-        // Optionally fetch the updated list
-        await fetchSavedEvents();
+        await _userService.saveEvent(event.id);
       }
       
       _isLoading = false;
@@ -80,18 +78,16 @@ class UserProvider with ChangeNotifier {
     }
   }
   
-  Future<bool> toggleAttendEvent(int eventId, bool currentAttendingStatus) async {
+  Future<bool> toggleAttendEvent(Event event, bool currentAttendingStatus) async {
     try {
       _isLoading = true;
       notifyListeners();
       
       if (currentAttendingStatus) {
-        await _userService.unattendEvent(eventId);
-        _attendingEvents.removeWhere((event) => event.id == eventId);
+        await _userService.unattendEvent(event.id);
+        _attendingEvents.remove(event);
       } else {
-        await _userService.attendEvent(eventId);
-        // Optionally fetch the updated list
-        await fetchAttendingEvents();
+        await _userService.attendEvent(event.id);
       }
       
       _isLoading = false;
@@ -106,12 +102,12 @@ class UserProvider with ChangeNotifier {
     }
   }
   
-  bool isEventSaved(int eventId) {
-    return _savedEvents.any((event) => event.id == eventId);
+  bool isEventSaved(Event event) {
+    return _savedEvents.contains(event);
   }
   
-  bool isEventAttending(int eventId) {
-    return _attendingEvents.any((event) => event.id == eventId);
+  bool isEventAttending(Event event) {
+    return _attendingEvents.contains(event);
   }
 
   Future<bool> deleteCurrentUser() async {
@@ -119,12 +115,11 @@ class UserProvider with ChangeNotifier {
       _isLoading = true;
       _error = null;
       notifyListeners();
-
+      
       await _userService.deleteCurrentUser();
 
       // Reset local state
-      _savedEvents.clear();
-      _attendingEvents.clear();
+      clear();
 
       _isLoading = false;
       notifyListeners();
@@ -136,6 +131,13 @@ class UserProvider with ChangeNotifier {
       notifyListeners();
       return false;
     }
+  }
+
+  // Clear method for logout
+  void clear() {
+    _savedEvents.clear();
+    _attendingEvents.clear();
+    notifyListeners();
   }
 
   Future<bool> submitEventProposal(Event event, List<XFile> images) async {

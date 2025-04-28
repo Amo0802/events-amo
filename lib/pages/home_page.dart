@@ -14,15 +14,44 @@ class HomePage extends StatefulWidget {
 }
 
 class HomePageState extends State<HomePage> {
+  bool _isRefreshing = false;
+
   @override
   void initState() {
     super.initState();
     // Fetch data when widget is initialized
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final provider = Provider.of<EventProvider>(context, listen: false);
-      provider.fetchPromotedEvents();
-      provider.fetchMainEvents();
+      _fetchData();
     });
+  }
+
+  Future<void> _fetchData() async {
+    final provider = Provider.of<EventProvider>(context, listen: false);
+    await provider.fetchPromotedEvents();
+    await provider.fetchMainEvents();
+  }
+
+  // Pull-to-refresh implementation
+  Future<void> _handleRefresh() async {
+    setState(() {
+      _isRefreshing = true;
+    });
+
+    try {
+      await _fetchData();
+    } catch (e) {
+      // Show error only if needed
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to refresh data. Please try again.')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isRefreshing = false;
+        });
+      }
+    }
+    return;
   }
 
   @override
@@ -31,22 +60,31 @@ class HomePageState extends State<HomePage> {
       child: Scaffold(
         body: Consumer<EventProvider>(
           builder: (context, provider, _) {
-            if (provider.isLoading) {
+            if (provider.isLoading && !_isRefreshing) {
               return const Center(child: CircularProgressIndicator());
             }
 
-            return CustomScrollView(
-              slivers: [
-                _buildAppBar(context),
-                _buildPromotedEvents(
-                  context,
-                  provider.promotedEvents?.content ?? [],
-                ),
-                _buildUpcomingEvents(
-                  context,
-                  provider.mainEvents?.content ?? [],
-                ),
-              ],
+            return RefreshIndicator(
+              onRefresh: _handleRefresh,
+              color: Theme.of(context).colorScheme.secondary,
+              backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+              child: CustomScrollView(
+                slivers: [
+                  _buildAppBar(context),
+                  _buildPromotedEvents(
+                    context,
+                    provider.promotedEvents?.content ?? [],
+                  ),
+                  _buildUpcomingEvents(
+                    context,
+                    provider.mainEvents?.content ?? [],
+                  ),
+                  // Add some extra space at the bottom
+                  SliverToBoxAdapter(
+                    child: SizedBox(height: 80),
+                  )
+                ],
+              ),
             );
           },
         ),
@@ -78,19 +116,6 @@ class HomePageState extends State<HomePage> {
           ),
         ],
       ),
-      // actions: [
-      //   IconButton(
-      //     icon: Icon(
-      //       Icons.notifications_outlined,
-      //       color: Colors.white,
-      //       size: 28,
-      //     ),
-      //     onPressed: () {
-      //       // Navigate to notifications
-      //     },
-      //   ),
-      //   SizedBox(width: 10),
-      // ],
     );
   }
 

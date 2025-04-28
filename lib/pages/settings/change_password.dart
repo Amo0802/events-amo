@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-
+import 'package:provider/provider.dart';
+import 'package:events_amo/providers/user_provider.dart';
 class ChangePasswordPage extends StatefulWidget {
   const ChangePasswordPage({super.key});
 
@@ -35,22 +36,23 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
     });
     
     try {
-      // TODO: Implement the actual password change
-      // Example implementation:
-      // final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      // await authProvider.changePassword(
-      //   _currentPasswordController.text, 
-      //   _newPasswordController.text
-      // );
+      // Use UserProvider to change password
+      final userProvider = Provider.of<UserProvider>(context, listen: false);
       
-      // For now, just simulate a delay
-      await Future.delayed(Duration(seconds: 1));
+      bool success = await userProvider.updatePassword(
+        _currentPasswordController.text,
+        _newPasswordController.text
+      );
       
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Password changed successfully')),
-        );
-        Navigator.pop(context);
+      if (success) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Password changed successfully')),
+          );
+          Navigator.pop(context);
+        }
+      } else {
+        throw Exception(userProvider.error ?? 'Failed to change password');
       }
     } catch (e) {
       if (mounted) {

@@ -1,4 +1,5 @@
 import 'package:events_amo/providers/auth_provider.dart';
+import 'package:events_amo/providers/user_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -17,14 +18,14 @@ class _EditProfilePageState extends State<EditProfilePage> {
   bool _isLoading = false;
   int _selectedAvatarIndex = 0;
   
-  // List of avatar options - you can replace these with your own avatar images
-  final List<String> _avatarOptions = [
-    'https://ui-avatars.com/api/?background=0D8ABC&color=fff&name=A',
-    'https://ui-avatars.com/api/?background=FF5733&color=fff&name=B',
-    'https://ui-avatars.com/api/?background=28B463&color=fff&name=C',
-    'https://ui-avatars.com/api/?background=7D3C98&color=fff&name=D',
-    'https://ui-avatars.com/api/?background=F1C40F&color=fff&name=E',
-    'https://ui-avatars.com/api/?background=566573&color=fff&name=F',
+  // List of avatar options with their background colors
+  final List<AvatarOption> _avatarOptions = [
+    AvatarOption(backgroundCode: '0D8ABC', index: 0), // Blue
+    AvatarOption(backgroundCode: 'FF5733', index: 1), // Orange/Red
+    AvatarOption(backgroundCode: '28B463', index: 2), // Green
+    AvatarOption(backgroundCode: '7D3C98', index: 3), // Purple
+    AvatarOption(backgroundCode: 'F1C40F', index: 4), // Yellow
+    AvatarOption(backgroundCode: '566573', index: 5), // Grey
   ];
 
   @override
@@ -34,11 +35,11 @@ class _EditProfilePageState extends State<EditProfilePage> {
   }
 
   void _loadUserData() {
-    final user = Provider.of<AuthProvider>(context, listen: false).currentUser;
+    final user = Provider.of<UserProvider>(context, listen: false).currentUser;
     if (user != null) {
       _nameController.text = user.name;
       _lastNameController.text = user.lastName;
-      // Here you would also set the selected avatar if you store that information
+      _selectedAvatarIndex = user.avatarId % _avatarOptions.length; // Use modulo to handle out of range avatarIds
     }
   }
 
@@ -57,16 +58,28 @@ class _EditProfilePageState extends State<EditProfilePage> {
     });
 
     try {
-      // Placeholder for profile update API call
-      // In a real implementation, you'd call your AuthProvider to update the user profile
-      // await Provider.of<AuthProvider>(context, listen: false).updateProfile(
-      //   _nameController.text,
-      //   _lastNameController.text,
-      //   _selectedAvatarIndex,
-      // );
+      final userProvider = Provider.of<UserProvider>(context, listen: false);
       
-      // Simulate API delay
-      await Future.delayed(Duration(seconds: 1));
+      // Update profile details (name, lastName)
+      bool profileSuccess = await userProvider.updateUserProfile(
+        _nameController.text,
+        _lastNameController.text,
+      );
+      
+      // Update avatar if needed
+      final currentUser = userProvider.currentUser;
+      if (currentUser != null && _selectedAvatarIndex != currentUser.avatarId) {
+        bool avatarSuccess = await userProvider.updateAvatar(_selectedAvatarIndex);
+        if (!avatarSuccess) {
+          throw Exception('Failed to update avatar');
+        }
+      }
+      
+      // Update the auth provider to refresh user data
+      if (profileSuccess) {
+        final authProvider = Provider.of<AuthProvider>(context, listen: false);
+        await authProvider.refreshUser();
+      }
       
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -87,6 +100,14 @@ class _EditProfilePageState extends State<EditProfilePage> {
         });
       }
     }
+  }
+
+  String _getAvatarUrl(int index, String firstName, String lastName) {
+    final background = _avatarOptions[index].backgroundCode;
+    final String initials = ((firstName.isNotEmpty ? firstName[0] : '') + 
+                            (lastName.isNotEmpty ? lastName[0] : '')).toUpperCase();
+    
+    return 'https://ui-avatars.com/api/?background=$background&color=fff&name=$initials&size=256';
   }
 
   @override
@@ -143,11 +164,23 @@ class _EditProfilePageState extends State<EditProfilePage> {
   }
 
   Widget _buildAvatarSelector() {
+    final userProvider = Provider.of<UserProvider>(context);
+    final user = userProvider.currentUser;
+    
+    // Default values in case user is null
+    String firstName = _nameController.text;
+    String lastName = _lastNameController.text;
+    
+    if (user != null) {
+      firstName = user.name;
+      lastName = user.lastName;
+    }
+    
     return Column(
       children: [
         CircleAvatar(
           radius: 60,
-          backgroundImage: NetworkImage(_avatarOptions[_selectedAvatarIndex]),
+          backgroundImage: NetworkImage(_getAvatarUrl(_selectedAvatarIndex, firstName, lastName)),
         ),
         SizedBox(height: 16),
         Text(
@@ -165,10 +198,11 @@ class _EditProfilePageState extends State<EditProfilePage> {
             scrollDirection: Axis.horizontal,
             itemCount: _avatarOptions.length,
             itemBuilder: (context, index) {
+              final avatarOption = _avatarOptions[index];
               return GestureDetector(
                 onTap: () {
                   setState(() {
-                    _selectedAvatarIndex = index;
+                    _selectedAvatarIndex = avatarOption.index;
                   });
                 },
                 child: Container(
@@ -176,7 +210,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: _selectedAvatarIndex == index
+                      color: _selectedAvatarIndex == avatarOption.index
                           ? Theme.of(context).colorScheme.tertiary
                           : Colors.transparent,
                       width: 3,
@@ -184,7 +218,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
                   ),
                   child: CircleAvatar(
                     radius: 30,
-                    backgroundImage: NetworkImage(_avatarOptions[index]),
+                    backgroundImage: NetworkImage(
+                      _getAvatarUrl(avatarOption.index, firstName, lastName)
+                    ),
                   ),
                 ),
               );
@@ -254,4 +290,12 @@ class _EditProfilePageState extends State<EditProfilePage> {
       ),
     );
   }
+}
+
+// Helper class to store avatar information
+class AvatarOption {
+  final String backgroundCode;
+  final int index;
+  
+  AvatarOption({required this.backgroundCode, required this.index});
 }

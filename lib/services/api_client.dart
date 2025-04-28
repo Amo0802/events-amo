@@ -2,8 +2,8 @@ import 'dart:convert';
 import 'package:http_parser/http_parser.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart'; // Add this import
 import 'package:image_picker/image_picker.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiClient {
   static final ApiClient _instance = ApiClient._internal();
@@ -12,6 +12,10 @@ class ApiClient {
 
   late final Dio _dio;
   final String _baseUrl;
+  
+  // Use secure storage instead of SharedPreferences
+  final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
+  final String _tokenKey = 'auth_token';
 
   ApiClient._internal() : _baseUrl = dotenv.env['API_URL'] ?? 'http://localhost:8080' {
     _dio = Dio(BaseOptions(
@@ -34,18 +38,15 @@ class ApiClient {
   }
 
   Future<String?> getAuthToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('auth_token');
+    return await _secureStorage.read(key: _tokenKey);
   }
 
   Future<void> saveAuthToken(String token) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('auth_token', token);
+    await _secureStorage.write(key: _tokenKey, value: token);
   }
 
   Future<void> clearAuthToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('auth_token');
+    await _secureStorage.delete(key: _tokenKey);
   }
 
   Future<Options> _getOptions({bool requiresAuth = true}) async {
@@ -143,59 +144,59 @@ class ApiClient {
     }
   }
 
- Future<dynamic> postEventProposal(String endpoint, Map<String, dynamic> eventData, List<XFile> images) async {
-  try {
-    final token = await getAuthToken();
-    
-    // Create form data
-    FormData formData = FormData();
-    
-    // Convert event data to a JSON string
-    String eventJson = jsonEncode(eventData);
-    
-    // Add as a "file" with application/json content type
-    formData.files.add(
-      MapEntry(
-        'event',
-        MultipartFile.fromString(
-          eventJson,
-          contentType: MediaType.parse('application/json'),
-        ),
-      ),
-    );
-    
-    // Add image files
-    for (var image in images) {
+  Future<dynamic> postEventProposal(String endpoint, Map<String, dynamic> eventData, List<XFile> images) async {
+    try {
+      final token = await getAuthToken();
+      
+      // Create form data
+      FormData formData = FormData();
+      
+      // Convert event data to a JSON string
+      String eventJson = jsonEncode(eventData);
+      
+      // Add as a "file" with application/json content type
       formData.files.add(
         MapEntry(
-          'images',
-          await MultipartFile.fromFile(
-            image.path,
-            filename: image.name,
+          'event',
+          MultipartFile.fromString(
+            eventJson,
+            contentType: MediaType.parse('application/json'),
           ),
         ),
       );
+      
+      // Add image files
+      for (var image in images) {
+        formData.files.add(
+          MapEntry(
+            'images',
+            await MultipartFile.fromFile(
+              image.path,
+              filename: image.name,
+            ),
+          ),
+        );
+      }
+      
+      // Set headers
+      final headers = {
+        'Accept': 'application/json',
+      };
+      
+      if (token != null) {
+        headers['Authorization'] = 'Bearer $token';
+      }
+      
+      final response = await _dio.post(
+        endpoint,
+        data: formData,
+        options: Options(headers: headers),
+      );
+      
+      return response.data;
+    } on DioException catch (e) {
+      _handleDioError(e);
+      rethrow;
     }
-    
-    // Set headers
-    final headers = {
-      'Accept': 'application/json',
-    };
-    
-    if (token != null) {
-      headers['Authorization'] = 'Bearer $token';
-    }
-    
-    final response = await _dio.post(
-      endpoint,
-      data: formData,
-      options: Options(headers: headers),
-    );
-    
-    return response.data;
-  } on DioException catch (e) {
-    _handleDioError(e);
-    rethrow;
   }
-}
 }

@@ -6,6 +6,7 @@ import 'package:events_amo/services/api_client.dart';
 import 'package:events_amo/services/auth_service.dart';
 import 'package:events_amo/services/event_service.dart';
 import 'package:events_amo/services/navigation_service.dart';
+import 'package:events_amo/services/user_profile_service.dart';
 import 'package:events_amo/services/user_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -20,13 +21,14 @@ void main() async {
   final authService = AuthService(apiClient);
   final eventService = EventService(apiClient);
   final userService = UserService(apiClient);
+  final profileService = UserProfileService(apiClient);
 
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider(authService)),
         ChangeNotifierProvider(create: (_) => EventProvider(eventService)),
-        ChangeNotifierProvider(create: (_) => UserProvider(userService)),
+        ChangeNotifierProvider(create: (_) => UserProvider(userService, profileService)),
       ],
       child: EventsApp(),
     ),

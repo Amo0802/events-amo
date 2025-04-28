@@ -9,8 +9,6 @@ class Event {
   final double price;
   final List<String> categories;
   final int priority;
-  final bool eventSaved;
-  final bool eventAttending;
   final bool mainEvent;
   final bool promoted;
   
@@ -25,8 +23,6 @@ class Event {
     required this.price,
     required this.categories,
     this.priority = 0,
-    this.eventSaved = false,
-    this.eventAttending = false,
     this.mainEvent = false,
     this.promoted = false,
   });
@@ -42,8 +38,6 @@ class Event {
     double? price,
     List<String>? categories,
     int? priority,
-    bool? eventSaved,
-    bool? eventAttending,
     bool? mainEvent,
     bool? promoted,
   }) {
@@ -58,8 +52,6 @@ class Event {
       price: price ?? this.price,
       categories: categories ?? this.categories,
       priority: priority ?? this.priority,
-      eventSaved: eventSaved ?? this.eventSaved,
-      eventAttending: eventAttending ?? this.eventAttending,
       mainEvent: mainEvent ?? this.mainEvent,
       promoted: promoted ?? this.promoted,
     );
@@ -84,8 +76,6 @@ class Event {
       price: price,
       categories: categories,
       priority: 0,
-      eventSaved: false,
-      eventAttending: false,
       mainEvent: false,
       promoted: false,
     );
@@ -110,8 +100,6 @@ class Event {
       price: json['price'] is int ? (json['price'] as int).toDouble() : json['price'],
       categories: List<String>.from(json['categories']), // expects ["MUSIC", "SPORTS"] etc.
       priority: json['priority'] ?? 0,
-      eventSaved: json['eventSaved'] ?? false,
-      eventAttending: json['eventAttending'] ?? false,
       mainEvent: json['mainEvent'] ?? false,
       promoted: json['promoted'] ?? false,
     );
@@ -128,8 +116,6 @@ class Event {
       'price': price,
       'categories': categories.map((e) => e.toUpperCase()).toList(), // send in UPPERCASE
       'priority': priority,
-      'eventSaved': eventSaved,
-      'eventAttending': eventAttending,
       'mainEvent': mainEvent,
       'promoted': promoted,
     };

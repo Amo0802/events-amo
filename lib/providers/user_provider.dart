@@ -1,22 +1,33 @@
 import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
 import '../models/event.dart';
+import '../models/user.dart';
+import '../services/user_profile_service.dart';
 import '../services/user_service.dart';
 
 class UserProvider with ChangeNotifier {
   final UserService _userService;
+  final UserProfileService _profileService;
 
   bool _isLoading = false;
   String? _error;
   List<Event> _savedEvents = [];
   List<Event> _attendingEvents = [];
+  User? _currentUser;
 
-  UserProvider(this._userService);
+  UserProvider(this._userService, this._profileService);
 
   bool get isLoading => _isLoading;
   String? get error => _error;
   List<Event> get savedEvents => _savedEvents;
   List<Event> get attendingEvents => _attendingEvents;
+  User? get currentUser => _currentUser;
+
+  // Set current user (called from AuthProvider)
+  void setCurrentUser(User user) {
+    _currentUser = user;
+    notifyListeners();
+  }
 
   Future<void> fetchSavedEvents() async {
     try {
@@ -82,10 +93,7 @@ class UserProvider with ChangeNotifier {
     }
   }
 
-  Future<bool> toggleAttendEvent(
-    Event event,
-    bool currentAttendingStatus,
-  ) async {
+  Future<bool> toggleAttendEvent(Event event, bool currentAttendingStatus) async {
     try {
       _isLoading = true;
       notifyListeners();
@@ -118,9 +126,7 @@ class UserProvider with ChangeNotifier {
   }
 
   bool isEventAttending(Event event) {
-    return _attendingEvents.any(
-      (attendingEvent) => attendingEvent.id == event.id,
-    );
+    return _attendingEvents.any((attendingEvent) => attendingEvent.id == event.id);
   }
 
   Future<bool> deleteCurrentUser() async {
@@ -146,10 +152,123 @@ class UserProvider with ChangeNotifier {
     }
   }
 
+  // Profile update methods
+  Future<bool> updateUserProfile(String name, String lastName) async {
+    if (_currentUser == null) return false;
+    
+    try {
+      _isLoading = true;
+      _error = null;
+      notifyListeners();
+
+      final updatedUser = _currentUser!.copyWith(
+        name: name,
+        lastName: lastName
+      );
+      
+      final result = await _profileService.updateUserProfile(updatedUser);
+      _currentUser = result;
+
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _isLoading = false;
+      _error = e.toString();
+      print('Error updating profile: $_error');
+      notifyListeners();
+      return false;
+    }
+  }
+  
+  Future<bool> updateAvatar(int avatarId) async {
+    if (_currentUser == null) return false;
+    
+    try {
+      _isLoading = true;
+      _error = null;
+      notifyListeners();
+
+      final result = await _profileService.updateUserAvatar(avatarId);
+      _currentUser = result;
+
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _isLoading = false;
+      _error = e.toString();
+      print('Error updating avatar: $_error');
+      notifyListeners();
+      return false;
+    }
+  }
+  
+  Future<bool> updatePassword(String currentPassword, String newPassword) async {
+    try {
+      _isLoading = true;
+      _error = null;
+      notifyListeners();
+
+      await _profileService.updateUserPassword(currentPassword, newPassword);
+
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _isLoading = false;
+      _error = e.toString();
+      print('Error updating password: $_error');
+      notifyListeners();
+      return false;
+    }
+  }
+  
+  Future<bool> updateEmail(String currentPassword, String newEmail) async {
+    try {
+      _isLoading = true;
+      _error = null;
+      notifyListeners();
+
+      await _profileService.updateUserEmail(currentPassword, newEmail);
+
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _isLoading = false;
+      _error = e.toString();
+      print('Error updating email: $_error');
+      notifyListeners();
+      return false;
+    }
+  }
+  
+  Future<bool> verifyEmailChange(String verificationCode) async {
+    try {
+      _isLoading = true;
+      _error = null;
+      notifyListeners();
+
+      await _profileService.verifyEmailChange(verificationCode);
+
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _isLoading = false;
+      _error = e.toString();
+      print('Error verifying email change: $_error');
+      notifyListeners();
+      return false;
+    }
+  }
+
   // Clear method for logout
   void clear() {
     _savedEvents.clear();
     _attendingEvents.clear();
+    _currentUser = null;
     notifyListeners();
   }
 

@@ -13,6 +13,7 @@ class CommunityEventsPage extends StatefulWidget {
 class CommunityEventsPageState extends State<CommunityEventsPage> {
   String selectedCity = 'ALL';
   String selectedCategory = 'ALL';
+  bool _isRefreshing = false;
 
   final List<String> cities = [
     'ALL',
@@ -33,9 +34,37 @@ class CommunityEventsPageState extends State<CommunityEventsPage> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final provider = Provider.of<EventProvider>(context, listen: false);
-      provider.fetchFilteredEvents(selectedCity, selectedCategory);
+      _fetchFilteredEvents();
     });
+  }
+
+  Future<void> _fetchFilteredEvents() async {
+    final provider = Provider.of<EventProvider>(context, listen: false);
+    await provider.fetchFilteredEvents(selectedCity, selectedCategory);
+  }
+
+  // Pull-to-refresh implementation
+  Future<void> _handleRefresh() async {
+    setState(() {
+      _isRefreshing = true;
+    });
+
+    try {
+      await _fetchFilteredEvents();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to refresh data. Please try again.')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isRefreshing = false;
+        });
+      }
+    }
+    return;
   }
 
   @override
@@ -44,22 +73,41 @@ class CommunityEventsPageState extends State<CommunityEventsPage> {
       child: Scaffold(
         body: Consumer<EventProvider>(
           builder: (context, provider, _) {
-            return CustomScrollView(
-              slivers: [
-                _buildCityDropdown(context),
-                _buildCategoryFilter(context, provider),
-                if (provider.isLoading)
+            return RefreshIndicator(
+              onRefresh: _handleRefresh,
+              color: Theme.of(context).colorScheme.secondary,
+              backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+              child: CustomScrollView(
+                slivers: [
+                  _buildCityDropdown(context),
+                  _buildCategoryFilter(context, provider),
+                  if (provider.isLoading && !_isRefreshing)
+                    SliverToBoxAdapter(
+                      child: Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(24.0),
+                          child: CircularProgressIndicator(),
+                        ),
+                      ),
+                    )
+                  else if (provider.filteredEvents == null ||
+                      provider.filteredEvents!.content.isEmpty)
+                    SliverToBoxAdapter(
+                      child: Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(24.0),
+                          child: Text("No events found."),
+                        ),
+                      ),
+                    )
+                  else
+                    _buildEventsList(context, provider),
+                  // Add extra space at bottom
                   SliverToBoxAdapter(
-                    child: Center(child: CircularProgressIndicator()),
-                  )
-                else if (provider.filteredEvents == null ||
-                    provider.filteredEvents!.content.isEmpty)
-                  SliverToBoxAdapter(
-                    child: Center(child: Text("No events found.")),
-                  )
-                else
-                  _buildEventsList(context, provider),
-              ],
+                    child: SizedBox(height: 80),
+                  ),
+                ],
+              ),
             );
           },
         ),
@@ -77,7 +125,7 @@ class CommunityEventsPageState extends State<CommunityEventsPage> {
             filled: true,
             fillColor: Theme.of(
               context,
-            ).colorScheme.tertiary.withValues(alpha: 0.1),
+            ).colorScheme.tertiary.withOpacity(0.1),
             contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 14),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(30),
@@ -140,7 +188,7 @@ class CommunityEventsPageState extends State<CommunityEventsPage> {
                     isSelected
                         ? Theme.of(
                           context,
-                        ).colorScheme.tertiary.withValues(alpha: 0.3)
+                        ).colorScheme.tertiary.withOpacity(0.3)
                         : Theme.of(context).scaffoldBackgroundColor,
                 selected: isSelected,
                 onSelected: (bool selected) {
@@ -149,7 +197,7 @@ class CommunityEventsPageState extends State<CommunityEventsPage> {
                 },
                 selectedColor: Theme.of(
                   context,
-                ).colorScheme.tertiary.withValues(alpha: 0.3),
+                ).colorScheme.tertiary.withOpacity(0.3),
                 checkmarkColor: Colors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20),
@@ -159,7 +207,7 @@ class CommunityEventsPageState extends State<CommunityEventsPage> {
                             ? Theme.of(context).colorScheme.tertiary
                             : Theme.of(
                               context,
-                            ).colorScheme.secondary.withValues(alpha: 0.5),
+                            ).colorScheme.secondary.withOpacity(0.5),
                     width: 1.5,
                   ),
                 ),

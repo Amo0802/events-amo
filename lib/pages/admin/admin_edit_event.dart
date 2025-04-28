@@ -24,11 +24,14 @@ class _AdminEditEventPageState extends State<AdminEditEventPage> {
   final TextEditingController _priceController = TextEditingController();
   final TextEditingController _mainImageUrlController = TextEditingController();
   final TextEditingController _otherImagesUrlController = TextEditingController();
+  final TextEditingController _priorityController = TextEditingController(text: "0");
   
   DateTime? _selectedDate;
   TimeOfDay? _selectedTime;
   List<String> _selectedCategories = [];
   String _selectedCity = 'PODGORICA';
+  bool _isMainEvent = false;
+  bool _isPromoted = false;
   
   bool _isLoading = false;
   bool _isSearching = false;
@@ -37,7 +40,7 @@ class _AdminEditEventPageState extends State<AdminEditEventPage> {
   
   // Available categories and cities
   final List<String> _availableCategories = [
-    'Music', 'Sports', 'Art', 'Food', 'Technology'
+    'MUSIC', 'SPORTS', 'ART', 'FOOD', 'TECHNOLOGY'
   ];
   
   final List<String> _availableCities = [
@@ -53,6 +56,7 @@ class _AdminEditEventPageState extends State<AdminEditEventPage> {
     _priceController.dispose();
     _mainImageUrlController.dispose();
     _otherImagesUrlController.dispose();
+    _priorityController.dispose();
     super.dispose();
   }
 
@@ -99,6 +103,7 @@ class _AdminEditEventPageState extends State<AdminEditEventPage> {
         _descriptionController.text = event.description;
         _priceController.text = event.price.toString();
         _mainImageUrlController.text = event.imageUrl;
+        _priorityController.text = event.priority.toString();
         
         _selectedCategories = List<String>.from(event.categories);
         _selectedCity = event.city;
@@ -107,6 +112,8 @@ class _AdminEditEventPageState extends State<AdminEditEventPage> {
           hour: event.startDateTime.hour,
           minute: event.startDateTime.minute,
         );
+        _isMainEvent = event.mainEvent;
+        _isPromoted = event.promoted;
       });
     } catch (e) {
       setState(() {
@@ -226,10 +233,9 @@ class _AdminEditEventPageState extends State<AdminEditEventPage> {
         startDateTime: eventDateTime,
         price: double.tryParse(_priceController.text) ?? 0.0,
         categories: _selectedCategories,
-        mainEvent: _loadedEvent!.mainEvent,
-        promoted: _loadedEvent!.promoted,
-        eventSaved: _loadedEvent!.eventSaved,
-        eventAttending: _loadedEvent!.eventAttending,
+        priority: int.tryParse(_priorityController.text) ?? 0,
+        mainEvent: _isMainEvent,
+        promoted: _isPromoted,
       );
 
       // Update the event
@@ -355,9 +361,31 @@ class _AdminEditEventPageState extends State<AdminEditEventPage> {
                         ],
                       ),
                       const SizedBox(height: 20),
+                      _buildTextField(
+                        controller: _priorityController,
+                        label: "Priority",
+                        hint: "Enter event priority (number)",
+                        maxLength: 3,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter a priority';
+                          }
+                          if (int.tryParse(value) == null) {
+                            return 'Priority must be a number';
+                          }
+                          return null;
+                        },
+                        keyboardType: TextInputType.number,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                        ],
+                      ),
+                      const SizedBox(height: 20),
                       _buildDateTimePicker(context),
                       const SizedBox(height: 20),
                       _buildCategoryPicker(context),
+                      const SizedBox(height: 20),
+                      _buildCheckboxes(context),
                       const SizedBox(height: 20),
                       _buildTextField(
                         controller: _mainImageUrlController,
@@ -412,6 +440,64 @@ class _AdminEditEventPageState extends State<AdminEditEventPage> {
                 ),
               ),
             ),
+    );
+  }
+
+  Widget _buildCheckboxes(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          "Event Status",
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: Colors.white,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.07),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Column(
+            children: [
+              CheckboxListTile(
+                title: Text(
+                  "Main Event",
+                  style: TextStyle(color: Colors.white),
+                ),
+                value: _isMainEvent,
+                onChanged: (value) {
+                  setState(() {
+                    _isMainEvent = value ?? false;
+                  });
+                },
+                activeColor: Theme.of(context).colorScheme.primary,
+                checkColor: Colors.white,
+                contentPadding: EdgeInsets.zero,
+              ),
+              CheckboxListTile(
+                title: Text(
+                  "Promoted Event",
+                  style: TextStyle(color: Colors.white),
+                ),
+                value: _isPromoted,
+                onChanged: (value) {
+                  setState(() {
+                    _isPromoted = value ?? false;
+                  });
+                },
+                activeColor: Theme.of(context).colorScheme.primary,
+                checkColor: Colors.white,
+                contentPadding: EdgeInsets.zero,
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 

@@ -14,15 +14,45 @@ class ProfilePage extends StatefulWidget {
 }
 
 class ProfilePageState extends State<ProfilePage> {
+  bool _isRefreshing = false;
+  
   @override
   void initState() {
     super.initState();
     // Fetch data when widget is initialized
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final userProvider = Provider.of<UserProvider>(context, listen: false);
-      userProvider.fetchSavedEvents();
-      userProvider.fetchAttendingEvents();
+      _fetchUserData();
     });
+  }
+  
+  Future<void> _fetchUserData() async {
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    await userProvider.fetchSavedEvents();
+    await userProvider.fetchAttendingEvents();
+  }
+  
+  // Pull-to-refresh implementation
+  Future<void> _handleRefresh() async {
+    setState(() {
+      _isRefreshing = true;
+    });
+
+    try {
+      await _fetchUserData();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to refresh data. Please try again.')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isRefreshing = false;
+        });
+      }
+    }
+    return;
   }
 
   @override
@@ -31,37 +61,42 @@ class ProfilePageState extends State<ProfilePage> {
       child: Scaffold(
         body: Consumer<UserProvider>(
           builder: (context, userProvider, _) {
-            if (userProvider.isLoading) {
+            if (userProvider.isLoading && !_isRefreshing) {
               return const Center(child: CircularProgressIndicator());
             }
 
             final authProvider = Provider.of<AuthProvider>(context);
             final user = authProvider.currentUser;
 
-            return CustomScrollView(
-              slivers: [
-                _buildAppBar(context),
-                _buildProfileHeader(
-                  context,
-                  user?.name ?? "Guest",
-                  user?.lastName ?? "User",
-                  user?.email ?? "guest@example.com",
-                ),
-                // _buildStatsSection(
-                //   context,
-                //   userProvider.attendingEvents.length,
-                //   0,
-                // ), // 0 for events created as we don't track this yet
-                _buildTabSection(
-                  context,
-                  userProvider.attendingEvents.isEmpty
-                      ? []
-                      : userProvider.attendingEvents,
-                  userProvider.savedEvents.isEmpty
-                      ? []
-                      : userProvider.savedEvents,
-                ),
-              ],
+            return RefreshIndicator(
+              onRefresh: _handleRefresh,
+              color: Theme.of(context).colorScheme.secondary,
+              backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+              child: CustomScrollView(
+                slivers: [
+                  _buildAppBar(context),
+                  _buildProfileHeader(
+                    context,
+                    user?.name ?? "Guest",
+                    user?.lastName ?? "User",
+                    user?.email ?? "guest@example.com",
+                    user?.avatarId ?? 0,
+                  ),
+                  _buildTabSection(
+                    context,
+                    userProvider.attendingEvents.isEmpty
+                        ? []
+                        : userProvider.attendingEvents,
+                    userProvider.savedEvents.isEmpty
+                        ? []
+                        : userProvider.savedEvents,
+                  ),
+                  // Add some extra space at the bottom
+                  SliverToBoxAdapter(
+                    child: SizedBox(height: 80),
+                  ),
+                ],
+              ),
             );
           },
         ),
@@ -98,7 +133,11 @@ class ProfilePageState extends State<ProfilePage> {
     String firstName,
     String lastName,
     String email,
+    int avatarId,
   ) {
+    // Generate avatar URL based on the avatarId
+    String avatarUrl = _getAvatarUrl(firstName, lastName, avatarId);
+    
     return SliverToBoxAdapter(
       child: Container(
         padding: EdgeInsets.all(20),
@@ -106,9 +145,7 @@ class ProfilePageState extends State<ProfilePage> {
           children: [
             CircleAvatar(
               radius: 50,
-              backgroundImage: NetworkImage(
-                'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80',
-              ),
+              backgroundImage: NetworkImage(avatarUrl),
             ),
             SizedBox(height: 16),
             Text(
@@ -128,7 +165,7 @@ class ProfilePageState extends State<ProfilePage> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: Theme.of(
                   context,
-                ).colorScheme.secondary.withValues(alpha: 0.2),
+                ).colorScheme.secondary.withOpacity(0.2),
                 foregroundColor: Theme.of(context).colorScheme.secondary,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(30),
@@ -147,59 +184,29 @@ class ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  // Widget _buildStatsSection(
-  //   BuildContext context,
-  //   int attendedCount,
-  //   int createdCount,
-  // ) {
-  //   return SliverToBoxAdapter(
-  //     child: Container(
-  //       padding: EdgeInsets.symmetric(vertical: 10),
-  //       margin: EdgeInsets.symmetric(horizontal: 20),
-  //       decoration: BoxDecoration(
-  //         borderRadius: BorderRadius.circular(15),
-  //         color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
-  //         border: Border.all(
-  //           color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
-  //           width: 1.5,
-  //         ),
-  //       ),
-  //       child: Row(
-  //         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-  //         children: [
-  //           _buildStat(context, "Events\nAttended", attendedCount.toString()),
-  //           _buildStat(context, "Events\nCreated", createdCount.toString()),
-  //           _buildStat(
-  //             context,
-  //             "Friends",
-  //             "0",
-  //           ), // Placeholder for future feature
-  //         ],
-  //       ),
-  //     ),
-  //   );
-  // }
-
-  // Widget _buildStat(BuildContext context, String label, String value) {
-  //   return Column(
-  //     children: [
-  //       Text(
-  //         value,
-  //         style: TextStyle(
-  //           fontSize: 28,
-  //           fontWeight: FontWeight.bold,
-  //           color: Theme.of(context).colorScheme.primary,
-  //         ),
-  //       ),
-  //       SizedBox(height: 4),
-  //       Text(
-  //         label,
-  //         textAlign: TextAlign.center,
-  //         style: TextStyle(fontSize: 14, color: Colors.grey[400]),
-  //       ),
-  //     ],
-  //   );
-  // }
+  // Helper method to get the avatar URL based on avatarId
+  String _getAvatarUrl(String firstName, String lastName, int avatarId) {
+    // Array of avatar background colors
+    final List<String> avatarBackgrounds = [
+      '0D8ABC', // Blue
+      'FF5733', // Orange/Red
+      '28B463', // Green
+      '7D3C98', // Purple
+      'F1C40F', // Yellow
+      '566573', // Grey
+    ];
+    
+    // Ensure avatarId is within range
+    final backgroundIndex = avatarId % avatarBackgrounds.length;
+    final background = avatarBackgrounds[backgroundIndex];
+    
+    // Get initials for the avatar
+    final String initials = ((firstName.isNotEmpty ? firstName[0] : '') + 
+                            (lastName.isNotEmpty ? lastName[0] : '')).toUpperCase();
+    
+    // Return the URL for the UI Avatars service
+    return 'https://ui-avatars.com/api/?background=$background&color=fff&name=$initials&size=256';
+  }
 
   Widget _buildTabSection(
     BuildContext context,
@@ -215,7 +222,6 @@ class ProfilePageState extends State<ProfilePage> {
             TabBar(
               tabs: [
                 Tab(text: "Upcoming"),
-                // Tab(text: "Past"),
                 Tab(text: "Saved"),
               ],
               labelColor: Theme.of(context).colorScheme.secondary,
@@ -229,7 +235,6 @@ class ProfilePageState extends State<ProfilePage> {
               child: TabBarView(
                 children: [
                   _buildUpcomingEvents(context, attendingEvents),
-                  // _buildPastEvents(context),
                   _buildSavedEvents(context, savedEvents),
                 ],
               ),
@@ -261,15 +266,6 @@ class ProfilePageState extends State<ProfilePage> {
       },
     );
   }
-
-  // Widget _buildPastEvents(BuildContext context) {
-  //   return Center(
-  //     child: Text(
-  //       "You have no past events",
-  //       style: TextStyle(color: Colors.grey[500], fontSize: 16),
-  //     ),
-  //   );
-  // }
 
   Widget _buildSavedEvents(BuildContext context, List<Event> savedEvents) {
     if (savedEvents.isEmpty) {

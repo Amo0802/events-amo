@@ -6,6 +6,8 @@ import 'package:events_amo/pages/profile_page.dart';
 import 'package:events_amo/pages/search_page.dart';
 import 'package:events_amo/pages/create_events.dart';
 import 'package:events_amo/providers/auth_provider.dart';
+import 'package:events_amo/providers/event_provider.dart';
+import 'package:events_amo/providers/user_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -18,7 +20,7 @@ class MainPage extends StatefulWidget {
   State<MainPage> createState() => _MainPageState();
 }
 
-class _MainPageState extends State<MainPage> {
+class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
   late int _currentIndex;
   bool _isCreateMenuOpen = false;
 
@@ -29,6 +31,48 @@ class _MainPageState extends State<MainPage> {
     super.initState();
     _currentIndex = widget.initialTabIndex;
     _pages = [HomePage(), CommunityEventsPage(), ProfilePage()];
+    
+    // Register this object as an observer for app lifecycle changes
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    // Remove the observer when this widget is disposed
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // This method is called when the app lifecycle state changes
+    if (state == AppLifecycleState.resumed) {
+      // App has come back to the foreground
+      _refreshData();
+    }
+  }
+
+  void _refreshData() {
+    // Don't refresh if the context is no longer valid
+    if (!mounted) return;
+    
+    try {
+      // Refresh event data
+      final eventProvider = Provider.of<EventProvider>(context, listen: false);
+      eventProvider.fetchMainEvents();
+      eventProvider.fetchPromotedEvents();
+      
+      // Refresh user data if logged in
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      if (authProvider.status == AuthStatus.authenticated) {
+        final userProvider = Provider.of<UserProvider>(context, listen: false);
+        userProvider.fetchSavedEvents();
+        userProvider.fetchAttendingEvents();
+      }
+    } catch (e) {
+      print('Error refreshing data: $e');
+      // Don't show error to user - this is a background refresh
+    }
   }
 
   void _onTabSelected(int index) {

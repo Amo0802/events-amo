@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:events_amo/providers/user_provider.dart';
 import 'package:events_amo/providers/auth_provider.dart';
 
 class ChangeEmailPage extends StatefulWidget {
@@ -49,23 +50,27 @@ class _ChangeEmailPageState extends State<ChangeEmailPage> {
     });
     
     try {
-      // TODO: Implement sending verification code
-      // Example implementation:
-      // final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      // await authProvider.sendEmailVerificationCode(_newEmailController.text);
+      // Use UserProvider to initiate email change process
+      final userProvider = Provider.of<UserProvider>(context, listen: false);
       
-      // For now, just simulate a delay
-      await Future.delayed(Duration(seconds: 1));
+      bool success = await userProvider.updateEmail(
+        _passwordController.text,
+        _newEmailController.text
+      );
       
-      setState(() {
-        _isCodeSent = true;
-        _isLoading = false;
-      });
-      
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Verification code sent to ${_newEmailController.text}')),
-        );
+      if (success) {
+        setState(() {
+          _isCodeSent = true;
+          _isLoading = false;
+        });
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Verification code sent to ${_newEmailController.text}')),
+          );
+        }
+      } else {
+        throw Exception(userProvider.error ?? 'Failed to send verification code');
       }
     } catch (e) {
       if (mounted) {
@@ -87,23 +92,26 @@ class _ChangeEmailPageState extends State<ChangeEmailPage> {
     });
     
     try {
-      // TODO: Implement verification and email change
-      // Example implementation:
-      // final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      // await authProvider.verifyAndChangeEmail(
-      //   _newEmailController.text,
-      //   _verificationCodeController.text,
-      //   _passwordController.text
-      // );
+      // Use UserProvider to verify the email change
+      final userProvider = Provider.of<UserProvider>(context, listen: false);
       
-      // For now, just simulate a delay
-      await Future.delayed(Duration(seconds: 1));
+      bool success = await userProvider.verifyEmailChange(
+        _verificationCodeController.text
+      );
       
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Email changed successfully')),
-        );
-        Navigator.pop(context);
+      if (success) {
+        // Update the auth provider to refresh user data
+        final authProvider = Provider.of<AuthProvider>(context, listen: false);
+        await authProvider.refreshUser();
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Email changed successfully')),
+          );
+          Navigator.pop(context);
+        }
+      } else {
+        throw Exception(userProvider.error ?? 'Failed to verify email change');
       }
     } catch (e) {
       if (mounted) {
@@ -163,6 +171,24 @@ class _ChangeEmailPageState extends State<ChangeEmailPage> {
                 },
               ),
               SizedBox(height: 20),
+              _buildPasswordField(
+                controller: _passwordController,
+                label: "Your Password",
+                hint: "Enter your password to confirm",
+                obscure: _obscurePassword,
+                toggleObscure: () {
+                  setState(() {
+                    _obscurePassword = !_obscurePassword;
+                  });
+                },
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter your password';
+                  }
+                  return null;
+                },
+              ),
+              SizedBox(height: 20),
               if (_isCodeSent) ...[
                 _buildTextField(
                   controller: _verificationCodeController,
@@ -172,24 +198,6 @@ class _ChangeEmailPageState extends State<ChangeEmailPage> {
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return 'Please enter the verification code';
-                    }
-                    return null;
-                  },
-                ),
-                SizedBox(height: 20),
-                _buildPasswordField(
-                  controller: _passwordController,
-                  label: "Your Password",
-                  hint: "Enter your password to confirm",
-                  obscure: _obscurePassword,
-                  toggleObscure: () {
-                    setState(() {
-                      _obscurePassword = !_obscurePassword;
-                    });
-                  },
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your password';
                     }
                     return null;
                   },

@@ -20,7 +20,7 @@ class User {
       name: json['name'],
       lastName: json['lastName'],
       email: json['email'],
-      isAdmin: json['isAdmin'] ?? false,
+      isAdmin: json['admin'] ?? false,
     );
   }
 

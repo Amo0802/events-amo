@@ -5,27 +5,27 @@ import '../services/user_service.dart';
 
 class UserProvider with ChangeNotifier {
   final UserService _userService;
-  
+
   bool _isLoading = false;
   String? _error;
   List<Event> _savedEvents = [];
   List<Event> _attendingEvents = [];
-  
+
   UserProvider(this._userService);
-  
+
   bool get isLoading => _isLoading;
   String? get error => _error;
   List<Event> get savedEvents => _savedEvents;
   List<Event> get attendingEvents => _attendingEvents;
-  
+
   Future<void> fetchSavedEvents() async {
     try {
       _isLoading = true;
       _error = null;
       notifyListeners();
-      
+
       _savedEvents = await _userService.getSavedEvents();
-      
+
       _isLoading = false;
       notifyListeners();
     } catch (e) {
@@ -35,15 +35,15 @@ class UserProvider with ChangeNotifier {
       notifyListeners();
     }
   }
-  
+
   Future<void> fetchAttendingEvents() async {
     try {
       _isLoading = true;
       _error = null;
       notifyListeners();
-      
+
       _attendingEvents = await _userService.getAttendingEvents();
-      
+
       _isLoading = false;
       notifyListeners();
     } catch (e) {
@@ -53,19 +53,23 @@ class UserProvider with ChangeNotifier {
       notifyListeners();
     }
   }
-  
+
   Future<bool> toggleSaveEvent(Event event, bool currentSavedStatus) async {
     try {
       _isLoading = true;
       notifyListeners();
-      
+
       if (currentSavedStatus) {
         await _userService.unsaveEvent(event.id);
-        _savedEvents.remove(event);
+        _savedEvents.removeWhere((e) => e.id == event.id);
       } else {
         await _userService.saveEvent(event.id);
+        // Add the event to local list if it doesn't exist
+        if (!_savedEvents.any((e) => e.id == event.id)) {
+          _savedEvents.add(event);
+        }
       }
-      
+
       _isLoading = false;
       notifyListeners();
       return true;
@@ -77,19 +81,26 @@ class UserProvider with ChangeNotifier {
       return false;
     }
   }
-  
-  Future<bool> toggleAttendEvent(Event event, bool currentAttendingStatus) async {
+
+  Future<bool> toggleAttendEvent(
+    Event event,
+    bool currentAttendingStatus,
+  ) async {
     try {
       _isLoading = true;
       notifyListeners();
-      
+
       if (currentAttendingStatus) {
         await _userService.unattendEvent(event.id);
-        _attendingEvents.remove(event);
+        _attendingEvents.removeWhere((e) => e.id == event.id);
       } else {
         await _userService.attendEvent(event.id);
+        // Add the event to local list if it doesn't exist
+        if (!_attendingEvents.any((e) => e.id == event.id)) {
+          _attendingEvents.add(event);
+        }
       }
-      
+
       _isLoading = false;
       notifyListeners();
       return true;
@@ -101,13 +112,15 @@ class UserProvider with ChangeNotifier {
       return false;
     }
   }
-  
+
   bool isEventSaved(Event event) {
-    return _savedEvents.contains(event);
+    return _savedEvents.any((savedEvent) => savedEvent.id == event.id);
   }
-  
+
   bool isEventAttending(Event event) {
-    return _attendingEvents.contains(event);
+    return _attendingEvents.any(
+      (attendingEvent) => attendingEvent.id == event.id,
+    );
   }
 
   Future<bool> deleteCurrentUser() async {
@@ -115,7 +128,7 @@ class UserProvider with ChangeNotifier {
       _isLoading = true;
       _error = null;
       notifyListeners();
-      
+
       await _userService.deleteCurrentUser();
 
       // Reset local state
@@ -145,9 +158,9 @@ class UserProvider with ChangeNotifier {
       _isLoading = true;
       _error = null;
       notifyListeners();
-      
+
       await _userService.submitEventProposal(event, images);
-      
+
       _isLoading = false;
       notifyListeners();
       return true;
@@ -159,7 +172,12 @@ class UserProvider with ChangeNotifier {
       return false;
     }
   }
-  
+
+  Future<void> fetchUserData() async {
+    await fetchSavedEvents();
+    await fetchAttendingEvents();
+  }
+
   // Add a method to clear errors
   void clearError() {
     _error = null;

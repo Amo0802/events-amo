@@ -1,5 +1,6 @@
 import 'package:events_amo/pages/main_page.dart';
 import 'package:events_amo/pages/register_page.dart';
+import 'package:events_amo/providers/user_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:events_amo/providers/auth_provider.dart';
@@ -53,6 +54,7 @@ class LoginPageState extends State<LoginPage> with SingleTickerProviderStateMixi
       });
 
       final authProvider = context.read<AuthProvider>();
+      final userProvider = context.read<UserProvider>();
 
       bool success = await authProvider.login(
         _emailController.text.trim(),
@@ -61,6 +63,8 @@ class LoginPageState extends State<LoginPage> with SingleTickerProviderStateMixi
 
       if (mounted) {
         if (success) {
+        await userProvider.fetchSavedEvents();
+        await userProvider.fetchAttendingEvents();
           // Replace the current route stack with MainPage and set the index to profile tab (2)
           Navigator.of(context).pushAndRemoveUntil(
             MaterialPageRoute(

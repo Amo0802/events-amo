@@ -93,7 +93,10 @@ class UserProvider with ChangeNotifier {
     }
   }
 
-  Future<bool> toggleAttendEvent(Event event, bool currentAttendingStatus) async {
+  Future<bool> toggleAttendEvent(
+    Event event,
+    bool currentAttendingStatus,
+  ) async {
     try {
       _isLoading = true;
       notifyListeners();
@@ -126,7 +129,9 @@ class UserProvider with ChangeNotifier {
   }
 
   bool isEventAttending(Event event) {
-    return _attendingEvents.any((attendingEvent) => attendingEvent.id == event.id);
+    return _attendingEvents.any(
+      (attendingEvent) => attendingEvent.id == event.id,
+    );
   }
 
   Future<bool> deleteCurrentUser() async {
@@ -155,7 +160,7 @@ class UserProvider with ChangeNotifier {
   // Profile update methods
   Future<bool> updateUserProfile(String name, String lastName) async {
     if (_currentUser == null) return false;
-    
+
     try {
       _isLoading = true;
       _error = null;
@@ -163,9 +168,9 @@ class UserProvider with ChangeNotifier {
 
       final updatedUser = _currentUser!.copyWith(
         name: name,
-        lastName: lastName
+        lastName: lastName,
       );
-      
+
       final result = await _profileService.updateUserProfile(updatedUser);
       _currentUser = result;
 
@@ -180,10 +185,10 @@ class UserProvider with ChangeNotifier {
       return false;
     }
   }
-  
+
   Future<bool> updateAvatar(int avatarId) async {
     if (_currentUser == null) return false;
-    
+
     try {
       _isLoading = true;
       _error = null;
@@ -203,8 +208,11 @@ class UserProvider with ChangeNotifier {
       return false;
     }
   }
-  
-  Future<bool> updatePassword(String currentPassword, String newPassword) async {
+
+  Future<bool> updatePassword(
+    String currentPassword,
+    String newPassword,
+  ) async {
     try {
       _isLoading = true;
       _error = null;
@@ -223,46 +231,46 @@ class UserProvider with ChangeNotifier {
       return false;
     }
   }
-  
-  Future<bool> updateEmail(String currentPassword, String newEmail) async {
-    try {
-      _isLoading = true;
-      _error = null;
-      notifyListeners();
 
-      await _profileService.updateUserEmail(currentPassword, newEmail);
+  // Future<bool> updateEmail(String currentPassword, String newEmail) async {
+  //   try {
+  //     _isLoading = true;
+  //     _error = null;
+  //     notifyListeners();
 
-      _isLoading = false;
-      notifyListeners();
-      return true;
-    } catch (e) {
-      _isLoading = false;
-      _error = e.toString();
-      print('Error updating email: $_error');
-      notifyListeners();
-      return false;
-    }
-  }
-  
-  Future<bool> verifyEmailChange(String verificationCode) async {
-    try {
-      _isLoading = true;
-      _error = null;
-      notifyListeners();
+  //     await _profileService.updateUserEmail(currentPassword, newEmail);
 
-      await _profileService.verifyEmailChange(verificationCode);
+  //     _isLoading = false;
+  //     notifyListeners();
+  //     return true;
+  //   } catch (e) {
+  //     _isLoading = false;
+  //     _error = e.toString();
+  //     print('Error updating email: $_error');
+  //     notifyListeners();
+  //     return false;
+  //   }
+  // }
 
-      _isLoading = false;
-      notifyListeners();
-      return true;
-    } catch (e) {
-      _isLoading = false;
-      _error = e.toString();
-      print('Error verifying email change: $_error');
-      notifyListeners();
-      return false;
-    }
-  }
+  // Future<bool> verifyEmailChange(String verificationCode) async {
+  //   try {
+  //     _isLoading = true;
+  //     _error = null;
+  //     notifyListeners();
+
+  //     await _profileService.verifyEmailChange(verificationCode);
+
+  //     _isLoading = false;
+  //     notifyListeners();
+  //     return true;
+  //   } catch (e) {
+  //     _isLoading = false;
+  //     _error = e.toString();
+  //     print('Error verifying email change: $_error');
+  //     notifyListeners();
+  //     return false;
+  //   }
+  // }
 
   // Clear method for logout
   void clear() {
@@ -295,6 +303,26 @@ class UserProvider with ChangeNotifier {
   Future<void> fetchUserData() async {
     await fetchSavedEvents();
     await fetchAttendingEvents();
+  }
+
+  Future<bool> makeUserAdmin(String email) async {
+    try {
+      _isLoading = true;
+      _error = null;
+      notifyListeners();
+
+      await _userService.makeUserAdmin(email);
+
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _isLoading = false;
+      _error = e.toString();
+      print('Error making user admin: $_error');
+      notifyListeners();
+      return false;
+    }
   }
 
   // Add a method to clear errors

@@ -1,4 +1,6 @@
 import 'package:events_amo/models/event.dart';
+import 'package:events_amo/pages/admin/make_admin.dart';
+import 'package:events_amo/providers/auth_provider.dart';
 import 'package:events_amo/providers/event_provider.dart';
 import 'package:events_amo/widgets/featured_event_card.dart';
 import 'package:events_amo/widgets/standard_event_card.dart';
@@ -41,9 +43,11 @@ class HomePageState extends State<HomePage> {
       await _fetchData();
     } catch (e) {
       // Show error only if needed
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to refresh data. Please try again.')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to refresh data. Please try again.')),
+        );
+      }
     } finally {
       if (mounted) {
         setState(() {
@@ -54,8 +58,27 @@ class HomePageState extends State<HomePage> {
     return;
   }
 
+  void _showMakeAdminDialog() {
+    showDialog(
+      context: context,
+      builder: (_) => MakeAdminDialog(),
+    ).then((success) {
+      if (success == true) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('User has been made admin successfully'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
+    final authProvider = Provider.of<AuthProvider>(context);
+    final isAdmin = authProvider.isAdmin;
+    
     return SafeArea(
       child: Scaffold(
         body: Consumer<EventProvider>(
@@ -70,7 +93,7 @@ class HomePageState extends State<HomePage> {
               backgroundColor: Theme.of(context).scaffoldBackgroundColor,
               child: CustomScrollView(
                 slivers: [
-                  _buildAppBar(context),
+                  _buildAppBar(context, isAdmin),
                   _buildPromotedEvents(
                     context,
                     provider.promotedEvents?.content ?? [],
@@ -92,7 +115,7 @@ class HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildAppBar(BuildContext context) {
+  Widget _buildAppBar(BuildContext context, bool isAdmin) {
     return SliverAppBar(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       floating: true,
@@ -116,6 +139,21 @@ class HomePageState extends State<HomePage> {
           ),
         ],
       ),
+      actions: [
+        if (isAdmin)
+          Padding(
+            padding: const EdgeInsets.only(right: 16.0),
+            child: IconButton(
+              icon: Icon(
+                Icons.admin_panel_settings,
+                color: Theme.of(context).colorScheme.tertiary,
+                size: 28,
+              ),
+              onPressed: _showMakeAdminDialog,
+              tooltip: "Make User Admin",
+            ),
+          ),
+      ],
     );
   }
 

@@ -1,6 +1,6 @@
 import 'package:events_amo/pages/main_page.dart';
 import 'package:events_amo/pages/settings/about.dart';
-import 'package:events_amo/pages/settings/change_email.dart';
+// import 'package:events_amo/pages/settings/change_email.dart';
 import 'package:events_amo/pages/settings/change_password.dart';
 import 'package:events_amo/pages/settings/edit_profile.dart';
 import 'package:events_amo/pages/settings/help_and_support.dart';
@@ -242,16 +242,16 @@ class _SettingsPageState extends State<SettingsPage> {
                 );
               },
             ),
-            _buildSettingTile(
-              icon: Icons.email_outlined,
-              title: "Change Email",
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => ChangeEmailPage()),
-                );
-              },
-            ),
+            // _buildSettingTile(
+            //   icon: Icons.email_outlined,
+            //   title: "Change Email",
+            //   onTap: () {
+            //     Navigator.push(
+            //       context,
+            //       MaterialPageRoute(builder: (context) => ChangeEmailPage()),
+            //     );
+            //   },
+            // ),
             _buildSettingTile(
               icon: Icons.lock_outline,
               title: "Change Password",

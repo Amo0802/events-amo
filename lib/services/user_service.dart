@@ -1,3 +1,4 @@
+import 'package:events_amo/models/user.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../models/event.dart';
@@ -34,7 +35,7 @@ class UserService {
     return (json as List).map((item) => Event.fromJson(item)).toList();
   }
 
-    Future<void> deleteCurrentUser() async {
+  Future<void> deleteCurrentUser() async {
     await _apiClient.delete('/user/current');
   }
 
@@ -42,22 +43,31 @@ class UserService {
     await _apiClient.delete('/user/$userId');
   }
 
-Future<void> submitEventProposal(Event event, List<XFile> images) async {
-  try {
-    // Format event data according to EventRequestDTO structure
-    final eventData = {
-      'name': event.name,
-      'description': event.description,
-      'address': event.address,
-      'startDateTime': event.startDateTime.toIso8601String(),
-      'price': event.price.toString(),
-      'categories': event.categories
-    };
-    
-    await _apiClient.postEventProposal('/user/submit-event', eventData, images);
-  } catch (e) {
-    print('Error submitting event: $e');
-    rethrow;
+  Future<void> submitEventProposal(Event event, List<XFile> images) async {
+    try {
+      // Format event data according to EventRequestDTO structure
+      final eventData = {
+        'name': event.name,
+        'description': event.description,
+        'address': event.address,
+        'startDateTime': event.startDateTime.toIso8601String(),
+        'price': event.price.toString(),
+        'categories': event.categories,
+      };
+
+      await _apiClient.postEventProposal(
+        '/user/submit-event',
+        eventData,
+        images,
+      );
+    } catch (e) {
+      print('Error submitting event: $e');
+      rethrow;
+    }
   }
-}
+
+  Future<User> makeUserAdmin(String email) async {
+    final json = await _apiClient.put('/user/make-admin?email=$email', {});
+    return User.fromJson(json);
+  }
 }

@@ -44,29 +44,29 @@ class UserProfileService {
   }
 
   /// Update user's email
-  Future<void> updateUserEmail(String currentPassword, String newEmail) async {
-    try {
-      // This endpoint would need to be created in the backend
-      await _apiClient.put('/user/email', {
-        'currentPassword': currentPassword,
-        'newEmail': newEmail
-      });
-    } catch (e) {
-      print('Error updating user email: $e');
-      rethrow;
-    }
-  }
+  // Future<void> updateUserEmail(String currentPassword, String newEmail) async {
+  //   try {
+  //     // This endpoint would need to be created in the backend
+  //     await _apiClient.put('/user/email', {
+  //       'currentPassword': currentPassword,
+  //       'newEmail': newEmail
+  //     });
+  //   } catch (e) {
+  //     print('Error updating user email: $e');
+  //     rethrow;
+  //   }
+  // }
 
-  /// Verify email change with verification code
-  Future<void> verifyEmailChange(String verificationCode) async {
-    try {
-      // This endpoint would need to be created in the backend
-      await _apiClient.put('/user/verify-email', {
-        'verificationCode': verificationCode
-      });
-    } catch (e) {
-      print('Error verifying email change: $e');
-      rethrow;
-    }
-  }
+  // /// Verify email change with verification code
+  // Future<void> verifyEmailChange(String verificationCode) async {
+  //   try {
+  //     // This endpoint would need to be created in the backend
+  //     await _apiClient.put('/user/verify-email', {
+  //       'verificationCode': verificationCode
+  //     });
+  //   } catch (e) {
+  //     print('Error verifying email change: $e');
+  //     rethrow;
+  //   }
+  // }
 }

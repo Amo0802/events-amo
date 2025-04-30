@@ -238,7 +238,7 @@ class _AdminDeleteEventPageState extends State<AdminDeleteEventPage> {
                 decoration: InputDecoration(
                   hintText: "Enter event ID to delete",
                   hintStyle: TextStyle(color: Colors.grey[500]),
-                  fillColor: Colors.white.withOpacity(0.07),
+                  fillColor: Colors.white.withValues(alpha: 0.07),
                   filled: true,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -277,10 +277,10 @@ class _AdminDeleteEventPageState extends State<AdminDeleteEventPage> {
     return Container(
       padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+        color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+          color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
           width: 1.5,
         ),
       ),

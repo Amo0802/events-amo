@@ -14,13 +14,10 @@ class CommunityEventsPageState extends State<CommunityEventsPage> {
   String selectedCity = 'ALL';
   String selectedCategory = 'ALL';
   bool _isRefreshing = false;
+  final ScrollController _scrollController = ScrollController();
 
-  final List<String> cities = [
-    'ALL',
-    'PODGORICA',
-    'BERANE',
-    'NIKSIC'
-  ];
+  final List<String> cities = ['ALL', 'PODGORICA', 'BERANE', 'NIKSIC'];
+
   final List<String> categories = [
     'ALL',
     'SPORTS',
@@ -33,9 +30,32 @@ class CommunityEventsPageState extends State<CommunityEventsPage> {
   @override
   void initState() {
     super.initState();
+
+    // Add scroll listener for pagination
+    _scrollController.addListener(_scrollListener);
+
+    // Fetch data when widget is initialized
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _fetchFilteredEvents();
     });
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_scrollListener);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _scrollListener() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
+      // Load more data when we're 200 pixels from the bottom
+      final provider = Provider.of<EventProvider>(context, listen: false);
+      if (!provider.isLoadingMore && provider.hasMoreFilteredEvents) {
+        provider.loadMoreFilteredEvents(selectedCity, selectedCategory);
+      }
+    }
   }
 
   Future<void> _fetchFilteredEvents() async {
@@ -78,6 +98,7 @@ class CommunityEventsPageState extends State<CommunityEventsPage> {
               color: Theme.of(context).colorScheme.secondary,
               backgroundColor: Theme.of(context).scaffoldBackgroundColor,
               child: CustomScrollView(
+                controller: _scrollController,
                 slivers: [
                   _buildCityDropdown(context),
                   _buildCategoryFilter(context, provider),
@@ -102,10 +123,25 @@ class CommunityEventsPageState extends State<CommunityEventsPage> {
                     )
                   else
                     _buildEventsList(context, provider),
+                  // Add loading indicator at the bottom if more items are available
+                  if (provider.filteredEvents != null &&
+                      provider.hasMoreFilteredEvents)
+                    SliverToBoxAdapter(
+                      child:
+                          provider.isLoadingMore
+                              ? Container(
+                                padding: EdgeInsets.symmetric(vertical: 16),
+                                alignment: Alignment.center,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color:
+                                      Theme.of(context).colorScheme.secondary,
+                                ),
+                              )
+                              : SizedBox(height: 60), // Spacer
+                    ),
                   // Add extra space at bottom
-                  SliverToBoxAdapter(
-                    child: SizedBox(height: 80),
-                  ),
+                  SliverToBoxAdapter(child: SizedBox(height: 20)),
                 ],
               ),
             );
@@ -123,9 +159,7 @@ class CommunityEventsPageState extends State<CommunityEventsPage> {
           value: selectedCity,
           decoration: InputDecoration(
             filled: true,
-            fillColor: Theme.of(
-              context,
-            ).colorScheme.tertiary.withOpacity(0.1),
+            fillColor: Theme.of(context).colorScheme.tertiary.withValues(alpha: 0.1),
             contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 14),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(30),
@@ -188,7 +222,7 @@ class CommunityEventsPageState extends State<CommunityEventsPage> {
                     isSelected
                         ? Theme.of(
                           context,
-                        ).colorScheme.tertiary.withOpacity(0.3)
+                        ).colorScheme.tertiary.withValues(alpha: 0.3)
                         : Theme.of(context).scaffoldBackgroundColor,
                 selected: isSelected,
                 onSelected: (bool selected) {
@@ -197,7 +231,7 @@ class CommunityEventsPageState extends State<CommunityEventsPage> {
                 },
                 selectedColor: Theme.of(
                   context,
-                ).colorScheme.tertiary.withOpacity(0.3),
+                ).colorScheme.tertiary.withValues(alpha: 0.3),
                 checkmarkColor: Colors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20),
@@ -207,7 +241,7 @@ class CommunityEventsPageState extends State<CommunityEventsPage> {
                             ? Theme.of(context).colorScheme.tertiary
                             : Theme.of(
                               context,
-                            ).colorScheme.secondary.withOpacity(0.5),
+                            ).colorScheme.secondary.withValues(alpha: 0.5),
                     width: 1.5,
                   ),
                 ),
@@ -224,8 +258,10 @@ class CommunityEventsPageState extends State<CommunityEventsPage> {
 
     return SliverList(
       delegate: SliverChildBuilderDelegate((context, index) {
-        final event = events[index];
-        return CommunityEventCard(event: event);
+        if (index >= events.length) {
+          return null;
+        }
+        return CommunityEventCard(event: events[index]);
       }, childCount: events.length),
     );
   }

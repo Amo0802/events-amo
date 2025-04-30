@@ -173,10 +173,10 @@ class AboutPage extends StatelessWidget {
         Container(
           padding: EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
             ),
           ),
           child: Column(
@@ -237,7 +237,7 @@ class AboutPage extends StatelessWidget {
         width: 40,
         height: 40,
         decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.secondary.withOpacity(0.1),
+          color: Theme.of(context).colorScheme.secondary.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(8),
         ),
         child: Icon(
@@ -271,7 +271,7 @@ class AboutPage extends StatelessWidget {
       margin: EdgeInsets.only(bottom: 16),
       padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.05),
+        color: Colors.white.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -280,7 +280,7 @@ class AboutPage extends StatelessWidget {
             width: 50,
             height: 50,
             decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.tertiary.withOpacity(0.1),
+              color: Theme.of(context).colorScheme.tertiary.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(

@@ -1,3 +1,4 @@
+import 'package:events_amo/services/notification_service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
 import '../models/event.dart';
@@ -22,12 +23,6 @@ class UserProvider with ChangeNotifier {
   List<Event> get savedEvents => _savedEvents;
   List<Event> get attendingEvents => _attendingEvents;
   User? get currentUser => _currentUser;
-
-  // Set current user (called from AuthProvider)
-  void setCurrentUser(User user) {
-    _currentUser = user;
-    notifyListeners();
-  }
 
   Future<void> fetchSavedEvents() async {
     try {
@@ -54,6 +49,12 @@ class UserProvider with ChangeNotifier {
       notifyListeners();
 
       _attendingEvents = await _userService.getAttendingEvents();
+
+      // Schedule notifications for all attending events
+      final notificationService = NotificationService();
+      for (var event in _attendingEvents) {
+        await notificationService.scheduleEventNotification(event);
+      }
 
       _isLoading = false;
       notifyListeners();
@@ -101,15 +102,26 @@ class UserProvider with ChangeNotifier {
       _isLoading = true;
       notifyListeners();
 
+      final notificationService = NotificationService();
+
       if (currentAttendingStatus) {
+        // User is unattending an event
         await _userService.unattendEvent(event.id);
         _attendingEvents.removeWhere((e) => e.id == event.id);
+
+        // Cancel the notification for this event
+        await notificationService.cancelEventNotification(event);
       } else {
+        // User is attending an event
         await _userService.attendEvent(event.id);
+
         // Add the event to local list if it doesn't exist
         if (!_attendingEvents.any((e) => e.id == event.id)) {
           _attendingEvents.add(event);
         }
+
+        // Schedule a notification for this event
+        await notificationService.scheduleEventNotification(event);
       }
 
       _isLoading = false;
@@ -132,6 +144,47 @@ class UserProvider with ChangeNotifier {
     return _attendingEvents.any(
       (attendingEvent) => attendingEvent.id == event.id,
     );
+  }
+
+  Future<User?> loadCurrentUserIfNeeded() async {
+    if (_currentUser != null) {
+      return _currentUser;
+    }
+
+    try {
+      _isLoading = true;
+      notifyListeners();
+
+      final user = await _userService.getCurrentUser();
+      _currentUser = user;
+
+      _isLoading = false;
+      notifyListeners();
+      return user;
+    } catch (e) {
+      _error = e.toString();
+      _isLoading = false;
+      notifyListeners();
+      return null;
+    }
+  }
+
+  Future<void> fetchCurrentUser() async {
+    try {
+      _isLoading = true;
+      notifyListeners();
+
+      final user = await _userService.getCurrentUser();
+      _currentUser = user;
+
+      _isLoading = false;
+      notifyListeners();
+    } catch (e) {
+      _isLoading = false;
+      _error = e.toString();
+      print('Error fetching current user: $_error');
+      notifyListeners();
+    }
   }
 
   Future<bool> deleteCurrentUser() async {
@@ -166,12 +219,7 @@ class UserProvider with ChangeNotifier {
       _error = null;
       notifyListeners();
 
-      final updatedUser = _currentUser!.copyWith(
-        name: name,
-        lastName: lastName,
-      );
-
-      final result = await _profileService.updateUserProfile(updatedUser);
+      final result = await _profileService.updateUserProfile(name, lastName);
       _currentUser = result;
 
       _isLoading = false;
@@ -272,8 +320,10 @@ class UserProvider with ChangeNotifier {
   //   }
   // }
 
-  // Clear method for logout
   void clear() {
+    // Cancel all event notifications
+    NotificationService().cancelAllNotifications();
+
     _savedEvents.clear();
     _attendingEvents.clear();
     _currentUser = null;
@@ -325,7 +375,6 @@ class UserProvider with ChangeNotifier {
     }
   }
 
-  // Add a method to clear errors
   void clearError() {
     _error = null;
     notifyListeners();

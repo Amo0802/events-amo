@@ -30,7 +30,7 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     _currentIndex = widget.initialTabIndex;
-    _pages = [HomePage(), CommunityEventsPage(), ProfilePage()];
+    _pages = [HomePage(), CommunityEventsPage(), ProfilePage(), SearchPage()];
     
     // Register this object as an observer for app lifecycle changes
     WidgetsBinding.instance.addObserver(this);
@@ -70,7 +70,7 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
         userProvider.fetchAttendingEvents();
       }
     } catch (e) {
-      print('Error refreshing data: $e');
+      ('Error refreshing data: $e');
       // Don't show error to user - this is a background refresh
     }
   }
@@ -107,13 +107,13 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
     }
 
     // Debug - check admin status
-    print(
+    (
       "User admin status check: ${authProvider.currentUser?.email}, isAdmin: ${authProvider.isAdmin}",
     );
 
     // If user is admin, show admin menu options
     if (authProvider.isAdmin) {
-      print("Opening admin menu options");
+      ("Opening admin menu options");
       setState(() {
         _isCreateMenuOpen = true;
       });
@@ -121,7 +121,7 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
     }
 
     // If regular user, go directly to create event page
-    print("Opening regular user create event page");
+    ("Opening regular user create event page");
     Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => CreateEventPage()),
@@ -132,10 +132,6 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
     setState(() {
       _isCreateMenuOpen = !_isCreateMenuOpen;
     });
-  }
-
-  void _openSearchPage() {
-    Navigator.of(context).push(MaterialPageRoute(builder: (_) => SearchPage()));
   }
 
   @override
@@ -172,7 +168,7 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
                 }
               },
               child: Container(
-                color: Colors.black.withOpacity(0.7),
+                color: Colors.black.withValues(alpha: 0.7),
                 child: Center(
                   child:
                       isAdmin
@@ -206,12 +202,12 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
               ),
               const SizedBox(width: 60),
               IconButton(
-                icon: const Icon(
+                icon: Icon(
                   Icons.search_outlined,
                   size: 28,
-                  color: Colors.white60,
+                  color: iconColor(3),
                 ),
-                onPressed: _openSearchPage,
+                onPressed: () => _onTabSelected(3),
               ),
               IconButton(
                 icon: Icon(Icons.person_outline, size: 28, color: iconColor(2)),

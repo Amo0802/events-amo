@@ -112,6 +112,7 @@ class Event {
       'description': description,
       'imageUrl': imageUrl,
       'city': city.toUpperCase(), // match enum values in backend
+      'address': address,
       'startDateTime': startDateTime.toIso8601String(),
       'price': price,
       'categories': categories.map((e) => e.toUpperCase()).toList(), // send in UPPERCASE

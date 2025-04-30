@@ -219,10 +219,10 @@
 //     return Container(
 //       padding: EdgeInsets.all(16),
 //       decoration: BoxDecoration(
-//         color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+//         color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
 //         borderRadius: BorderRadius.circular(12),
 //         border: Border.all(
-//           color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+//           color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
 //           width: 1.5,
 //         ),
 //       ),
@@ -294,7 +294,7 @@
 //           decoration: InputDecoration(
 //             hintText: hint,
 //             hintStyle: TextStyle(color: Colors.grey[500]),
-//             fillColor: Colors.white.withOpacity(0.1),
+//             fillColor: Colors.white.withValues(alpha: 0.1),
 //             filled: true,
 //             border: OutlineInputBorder(
 //               borderRadius: BorderRadius.circular(12),
@@ -335,7 +335,7 @@
 //           decoration: InputDecoration(
 //             hintText: hint,
 //             hintStyle: TextStyle(color: Colors.grey[500]),
-//             fillColor: Colors.white.withOpacity(0.1),
+//             fillColor: Colors.white.withValues(alpha: 0.1),
 //             filled: true,
 //             border: OutlineInputBorder(
 //               borderRadius: BorderRadius.circular(12),
@@ -367,7 +367,7 @@
 //           shape: RoundedRectangleBorder(
 //             borderRadius: BorderRadius.circular(12),
 //           ),
-//           disabledBackgroundColor: Theme.of(context).colorScheme.secondary.withOpacity(0.6),
+//           disabledBackgroundColor: Theme.of(context).colorScheme.secondary.withValues(alpha: 0.6),
 //         ),
 //         child: _isLoading
 //             ? SizedBox(
@@ -398,7 +398,7 @@
 //           shape: RoundedRectangleBorder(
 //             borderRadius: BorderRadius.circular(12),
 //           ),
-//           disabledBackgroundColor: Theme.of(context).colorScheme.tertiary.withOpacity(0.6),
+//           disabledBackgroundColor: Theme.of(context).colorScheme.tertiary.withValues(alpha: 0.6),
 //         ),
 //         child: _isLoading
 //             ? SizedBox(

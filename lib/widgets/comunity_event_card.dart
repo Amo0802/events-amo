@@ -3,6 +3,7 @@ import 'package:events_amo/pages/events_detail_page.dart';
 import 'package:events_amo/pages/login_page.dart';
 import 'package:events_amo/providers/auth_provider.dart';
 import 'package:events_amo/providers/user_provider.dart';
+import 'package:events_amo/utils/notification_permission_handler.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -25,7 +26,9 @@ class _CommunityEventCardState extends State<CommunityEventCard> {
 
     // Check if user is logged in
     if (authProvider.status != AuthStatus.authenticated) {
-      Navigator.of(context).push(MaterialPageRoute(builder: (_) => LoginPage()));
+      Navigator.of(
+        context,
+      ).push(MaterialPageRoute(builder: (_) => LoginPage()));
       return;
     }
 
@@ -48,17 +51,32 @@ class _CommunityEventCardState extends State<CommunityEventCard> {
         });
   }
 
-  void _toggleAttend(bool isAttending) {
+  void _toggleAttend(bool isAttending) async {
     final userProvider = Provider.of<UserProvider>(context, listen: false);
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
     // Check if user is logged in
     if (authProvider.status != AuthStatus.authenticated) {
-      Navigator.of(context).push(MaterialPageRoute(builder: (_) => LoginPage()));
+      Navigator.of(
+        context,
+      ).push(MaterialPageRoute(builder: (_) => LoginPage()));
       return;
     }
 
     if (_isProcessing) return;
+
+    // If we're going to attend (not already attending), ask for notification permission
+    if (!isAttending) {
+      final hasPermission =
+          await NotificationPermissionHandler.requestPermission(context);
+      if (hasPermission) {
+        // Inform user about the notification
+        NotificationPermissionHandler.showNotificationConfirmation(
+          context,
+          widget.event,
+        );
+      }
+    }
 
     setState(() {
       _isProcessing = true;
@@ -79,14 +97,15 @@ class _CommunityEventCardState extends State<CommunityEventCard> {
 
   @override
   Widget build(BuildContext context) {
-    // Get current status from UserProvider 
+    // Get current status from UserProvider
     final userProvider = Provider.of<UserProvider>(context);
     final authProvider = Provider.of<AuthProvider>(context);
-    
+
     final bool isLoggedIn = authProvider.status == AuthStatus.authenticated;
     final bool isSaved = isLoggedIn && userProvider.isEventSaved(widget.event);
-    final bool isAttending = isLoggedIn && userProvider.isEventAttending(widget.event);
-    
+    final bool isAttending =
+        isLoggedIn && userProvider.isEventAttending(widget.event);
+
     return GestureDetector(
       onTap: () {
         Navigator.push(
@@ -239,7 +258,10 @@ class _CommunityEventCardState extends State<CommunityEventCard> {
                     children: [
                       Expanded(
                         child: ElevatedButton(
-                          onPressed: _isProcessing ? null : () => _toggleAttend(isAttending),
+                          onPressed:
+                              _isProcessing
+                                  ? null
+                                  : () => _toggleAttend(isAttending),
                           style: ElevatedButton.styleFrom(
                             backgroundColor:
                                 isAttending
@@ -269,7 +291,8 @@ class _CommunityEventCardState extends State<CommunityEventCard> {
                                   ? Theme.of(context).colorScheme.tertiary
                                   : Colors.grey[400],
                         ),
-                        onPressed: _isProcessing ? null : () => _toggleSave(isSaved),
+                        onPressed:
+                            _isProcessing ? null : () => _toggleSave(isSaved),
                       ),
                     ],
                   ),

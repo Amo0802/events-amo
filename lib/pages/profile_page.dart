@@ -165,7 +165,7 @@ class ProfilePageState extends State<ProfilePage> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: Theme.of(
                   context,
-                ).colorScheme.secondary.withOpacity(0.2),
+                ).colorScheme.secondary.withValues(alpha: 0.2),
                 foregroundColor: Theme.of(context).colorScheme.secondary,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(30),

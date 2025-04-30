@@ -376,7 +376,7 @@ class _AdminCreateEventPageState extends State<AdminCreateEventPage> {
         Container(
           padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.07),
+            color: Colors.white.withValues(alpha: 0.07),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Column(
@@ -433,7 +433,7 @@ class _AdminCreateEventPageState extends State<AdminCreateEventPage> {
         SizedBox(height: 8),
         Container(
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.07),
+            color: Colors.white.withValues(alpha: 0.07),
             borderRadius: BorderRadius.circular(12),
           ),
           child: DropdownButtonFormField<String>(
@@ -497,7 +497,7 @@ class _AdminCreateEventPageState extends State<AdminCreateEventPage> {
           decoration: InputDecoration(
             hintText: hint,
             hintStyle: TextStyle(color: Colors.grey[500]),
-            fillColor: Colors.white.withOpacity(0.07),
+            fillColor: Colors.white.withValues(alpha: 0.07),
             filled: true,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
@@ -541,7 +541,7 @@ class _AdminCreateEventPageState extends State<AdminCreateEventPage> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.07),
+                    color: Colors.white.withValues(alpha: 0.07),
                     borderRadius: BorderRadius.circular(12),
                     border: _selectedDate == null && _errorMessage != null
                         ? Border.all(color: Colors.red)
@@ -573,7 +573,7 @@ class _AdminCreateEventPageState extends State<AdminCreateEventPage> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.07),
+                    color: Colors.white.withValues(alpha: 0.07),
                     borderRadius: BorderRadius.circular(12),
                     border: _selectedTime == null && _errorMessage != null
                         ? Border.all(color: Colors.red)
@@ -622,7 +622,7 @@ class _AdminCreateEventPageState extends State<AdminCreateEventPage> {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.07),
+              color: Colors.white.withValues(alpha: 0.07),
               borderRadius: BorderRadius.circular(12),
               border: _selectedCategories.isEmpty && _errorMessage != null
                   ? Border.all(color: Colors.red)
@@ -653,7 +653,7 @@ class _AdminCreateEventPageState extends State<AdminCreateEventPage> {
                                     vertical: 4,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: Theme.of(context).colorScheme.secondary.withOpacity(0.7),
+                                    color: Theme.of(context).colorScheme.secondary.withValues(alpha: 0.7),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
                                   child: Text(

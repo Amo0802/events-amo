@@ -2,6 +2,7 @@ import 'package:events_amo/models/event.dart';
 import 'package:events_amo/pages/login_page.dart';
 import 'package:events_amo/providers/auth_provider.dart';
 import 'package:events_amo/providers/user_provider.dart';
+import 'package:events_amo/utils/notification_permission_handler.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -25,7 +26,9 @@ class EventDetailPageState extends State<EventDetailPage> {
 
     // Check if user is logged in
     if (authProvider.status != AuthStatus.authenticated) {
-      Navigator.of(context).push(MaterialPageRoute(builder: (_) => LoginPage()));
+      Navigator.of(
+        context,
+      ).push(MaterialPageRoute(builder: (_) => LoginPage()));
       return;
     }
 
@@ -48,17 +51,32 @@ class EventDetailPageState extends State<EventDetailPage> {
         });
   }
 
-  void _toggleAttend(bool isAttending) {
+  void _toggleAttend(bool isAttending) async {
     final userProvider = Provider.of<UserProvider>(context, listen: false);
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
     // Check if user is logged in
     if (authProvider.status != AuthStatus.authenticated) {
-      Navigator.of(context).push(MaterialPageRoute(builder: (_) => LoginPage()));
+      Navigator.of(
+        context,
+      ).push(MaterialPageRoute(builder: (_) => LoginPage()));
       return;
     }
 
     if (_isProcessing) return;
+
+    // If we're going to attend (not already attending), ask for notification permission
+    if (!isAttending) {
+      final hasPermission =
+          await NotificationPermissionHandler.requestPermission(context);
+      if (hasPermission) {
+        // Inform user about the notification
+        NotificationPermissionHandler.showNotificationConfirmation(
+          context,
+          widget.event,
+        );
+      }
+    }
 
     setState(() {
       _isProcessing = true;
@@ -82,11 +100,12 @@ class EventDetailPageState extends State<EventDetailPage> {
     // Get current status from UserProvider
     final userProvider = Provider.of<UserProvider>(context);
     final authProvider = Provider.of<AuthProvider>(context);
-    
+
     final bool isLoggedIn = authProvider.status == AuthStatus.authenticated;
     final bool isSaved = isLoggedIn && userProvider.isEventSaved(widget.event);
-    final bool isAttending = isLoggedIn && userProvider.isEventAttending(widget.event);
-    
+    final bool isAttending =
+        isLoggedIn && userProvider.isEventAttending(widget.event);
+
     return Scaffold(
       body: CustomScrollView(
         slivers: [
@@ -333,273 +352,3 @@ class EventDetailPageState extends State<EventDetailPage> {
     );
   }
 }
-
-
-  // Widget _buildOrganizerInfo(BuildContext context) {
-  //   // Only show for community events
-  //   if (widget.isOfficial) return SizedBox.shrink();
-
-  //   return Padding(
-  //     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-  //     child: Column(
-  //       crossAxisAlignment: CrossAxisAlignment.start,
-  //       children: [
-  //         Text(
-  //           "Organizer",
-  //           style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-  //         ),
-  //         SizedBox(height: 12),
-  //         Container(
-  //           padding: EdgeInsets.all(16),
-  //           decoration: BoxDecoration(
-  //             borderRadius: BorderRadius.circular(16),
-  //             color: Color(0xFF1A1F38),
-  //           ),
-  //           child: Row(
-  //             children: [
-  //               CircleAvatar(
-  //                 radius: 25,
-  //                 backgroundImage: NetworkImage(
-  //                   'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80',
-  //                 ),
-  //               ),
-  //               SizedBox(width: 16),
-  //               Expanded(
-  //                 child: Column(
-  //                   crossAxisAlignment: CrossAxisAlignment.start,
-  //                   children: [
-  //                     Text(
-  //                       widget.eventData['organizer'] ?? 'Event Organizer',
-  //                       style: TextStyle(
-  //                         fontSize: 16,
-  //                         fontWeight: FontWeight.bold,
-  //                       ),
-  //                     ),
-  //                     SizedBox(height: 4),
-  //                     Text(
-  //                       "17 events hosted",
-  //                       style: TextStyle(color: Colors.grey[400], fontSize: 14),
-  //                     ),
-  //                   ],
-  //                 ),
-  //               ),
-  //               TextButton(
-  //                 onPressed: () {
-  //                   // View organizer profile
-  //                 },
-  //                 child: Text("View"),
-  //                 style: TextButton.styleFrom(
-  //                   foregroundColor: Theme.of(context).colorScheme.secondary,
-  //                 ),
-  //               ),
-  //             ],
-  //           ),
-  //         ),
-  //       ],
-  //     ),
-  //   );
-  // }
-
-  // Widget _buildAttendeesList(BuildContext context) {
-  //   // Mock attendees data
-  //   final attendees = [
-  //     {'name': 'Jane Smith', 'image': 'https://images.unsplash.com/photo-1517841905240-472988babdf9?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80'},
-  //     {'name': 'Mike Johnson', 'image': 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80'},
-  //     {'name': 'Sarah Wilson', 'image': 'https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80'},
-  //     {'name': 'David Brown', 'image': 'https://images.unsplash.com/photo-1499996860823-5214fcc65f8f?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80'},
-  //     {'name': 'Others', 'image': ''},
-  //   ];
-
-  //   return Padding(
-  //     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-  //     child: Column(
-  //       crossAxisAlignment: CrossAxisAlignment.start,
-  //       children: [
-  //         Row(
-  //           mainAxisAlignment: MainAxisAlignment.spaceBetween,
-  //           children: [
-  //             Text(
-  //               "Attendees",
-  //               style: TextStyle(
-  //                 fontSize: 22,
-  //                 fontWeight: FontWeight.bold,
-  //               ),
-  //             ),
-  //             TextButton(
-  //               onPressed: () {
-  //                 // View all attendees
-  //               },
-  //               child: Text("View All"),
-  //               style: TextButton.styleFrom(
-  //                 foregroundColor: Theme.of(context).colorScheme.secondary,
-  //               ),
-  //             ),
-  //           ],
-  //         ),
-  //         SizedBox(height: 12),
-  //         Row(
-  //           children: [
-  //             // Display first 4 attendees as overlapping circle avatars
-  //             for (int i = 0; i < attendees.length - 1; i++)
-  //               Container(
-  //                 margin: EdgeInsets.only(right: 10),
-  //                 decoration: BoxDecoration(
-  //                   shape: BoxShape.circle,
-  //                   border: Border.all(
-  //                     color: Theme.of(context).scaffoldBackgroundColor,
-  //                     width: 2,
-  //                   ),
-  //                 ),
-  //                 child: CircleAvatar(
-  //                   radius: 22,
-  //                   backgroundImage: NetworkImage(attendees[i]['image']!),
-  //                 ),
-  //               ),
-  //             // The "more" circle
-  //             Container(
-  //               margin: EdgeInsets.only(left: 5),
-  //               decoration: BoxDecoration(
-  //                 shape: BoxShape.circle,
-  //                 border: Border.all(
-  //                   color: Theme.of(context).scaffoldBackgroundColor,
-  //                   width: 2,
-  //                 ),
-  //                 color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
-  //               ),
-  //               child: CircleAvatar(
-  //                 radius: 22,
-  //                 backgroundColor: Colors.transparent,
-  //                 child: Text(
-  //                   "+${(widget.eventData['attendees'] ?? 0) - 4}",
-  //                   style: TextStyle(
-  //                     color: Theme.of(context).colorScheme.primary,
-  //                     fontWeight: FontWeight.bold,
-  //                   ),
-  //                 ),
-  //               ),
-  //             ),
-  //             SizedBox(width: 16),
-  //             // Status text
-  //             if (isAttending)
-  //               Text(
-  //                 "You're attending",
-  //                 style: TextStyle(
-  //                   color: Theme.of(context).colorScheme.secondary,
-  //                   fontWeight: FontWeight.bold,
-  //                 ),
-  //               ),
-  //           ],
-  //         ),
-  //       ],
-  //     ),
-  //   );
-  // }
-
-  // Widget _buildRelatedEvents(BuildContext context) {
-  //   // Only show for official events
-  //   if (!widget.isOfficial) return SizedBox.shrink();
-
-  //   // Mock related events
-  //   final relatedEvents = [
-  //     {
-  //       'title': 'Workshop: Advanced Techniques',
-  //       'image':
-  //           'https://images.unsplash.com/photo-1551434678-e076c223a692?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80',
-  //       'date': DateTime.now().add(Duration(days: 10)),
-  //     },
-  //     {
-  //       'title': 'Panel Discussion: Future Trends',
-  //       'image':
-  //           'https://images.unsplash.com/photo-1515187029135-18ee286d815b?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80',
-  //       'date': DateTime.now().add(Duration(days: 12)),
-  //     },
-  //   ];
-
-  //   return Padding(
-  //     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-  //     child: Column(
-  //       crossAxisAlignment: CrossAxisAlignment.start,
-  //       children: [
-  //         Text(
-  //           "Related Events",
-  //           style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-  //         ),
-  //         SizedBox(height: 12),
-  //         Container(
-  //           height: 200,
-  //           child: ListView.builder(
-  //             scrollDirection: Axis.horizontal,
-  //             itemCount: relatedEvents.length,
-  //             itemBuilder: (context, index) {
-  //               final event = relatedEvents[index];
-  //               return Container(
-  //                 width: 280,
-  //                 margin: EdgeInsets.only(right: 16),
-  //                 decoration: BoxDecoration(
-  //                   borderRadius: BorderRadius.circular(16),
-  //                   color: Color(0xFF1A1F38),
-  //                 ),
-  //                 child: Column(
-  //                   crossAxisAlignment: CrossAxisAlignment.start,
-  //                   children: [
-  //                     // Image
-  //                     ClipRRect(
-  //                       borderRadius: BorderRadius.only(
-  //                         topLeft: Radius.circular(16),
-  //                         topRight: Radius.circular(16),
-  //                       ),
-  //                       child: Image.network(
-  //                         event['image'] as String,
-  //                         height: 120,
-  //                         width: double.infinity,
-  //                         fit: BoxFit.cover,
-  //                       ),
-  //                     ),
-  //                     // Content
-  //                     Padding(
-  //                       padding: EdgeInsets.all(12),
-  //                       child: Column(
-  //                         crossAxisAlignment: CrossAxisAlignment.start,
-  //                         children: [
-  //                           Text(
-  //                             event['title'] as String,
-  //                             style: TextStyle(
-  //                               fontSize: 16,
-  //                               fontWeight: FontWeight.bold,
-  //                             ),
-  //                             maxLines: 1,
-  //                             overflow: TextOverflow.ellipsis,
-  //                           ),
-  //                           SizedBox(height: 8),
-  //                           Row(
-  //                             children: [
-  //                               Icon(
-  //                                 Icons.calendar_today,
-  //                                 color: Theme.of(context).colorScheme.primary,
-  //                                 size: 14,
-  //                               ),
-  //                               SizedBox(width: 4),
-  //                               Text(
-  //                                 DateFormat(
-  //                                   'MMM d',
-  //                                 ).format(event['date'] as DateTime),
-  //                                 style: TextStyle(
-  //                                   color: Colors.grey[400],
-  //                                   fontSize: 12,
-  //                                 ),
-  //                               ),
-  //                             ],
-  //                           ),
-  //                         ],
-  //                       ),
-  //                     ),
-  //                   ],
-  //                 ),
-  //               );
-  //             },
-  //           ),
-  //         ),
-  //       ],
-  //     ),
-  //   );
-  // }

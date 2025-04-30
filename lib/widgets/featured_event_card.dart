@@ -34,7 +34,7 @@ class FeaturedEventCard extends StatelessWidget {
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.3),
+              color: Colors.black.withValues(alpha: 0.3),
               blurRadius: 10,
               offset: Offset(0, 5),
             ),
@@ -75,7 +75,7 @@ class FeaturedEventCard extends StatelessWidget {
                         gradient: LinearGradient(
                           colors: [
                             Colors.transparent,
-                            Colors.black.withOpacity(0.7),
+                            Colors.black.withValues(alpha: 0.7),
                           ],
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
@@ -93,7 +93,7 @@ class FeaturedEventCard extends StatelessWidget {
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.secondary.withOpacity(0.8),
+                        color: Theme.of(context).colorScheme.secondary.withValues(alpha: 0.8),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
@@ -117,7 +117,7 @@ class FeaturedEventCard extends StatelessWidget {
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.amber.withOpacity(0.8),
+                          color: Colors.amber.withValues(alpha: 0.8),
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Row(

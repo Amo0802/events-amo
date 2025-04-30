@@ -38,14 +38,12 @@ class AuthProvider with ChangeNotifier {
       if (isAuthenticated) {
         _currentUser = await _authService.getCurrentUser();
         _status = AuthStatus.authenticated;
-        print("User authenticated: ${_currentUser?.name}, isAdmin: ${_currentUser?.isAdmin}"); // Debug log
       } else {
         _status = AuthStatus.unauthenticated;
       }
     } catch (e) {
       _status = AuthStatus.unauthenticated;
       _error = e.toString();
-      print('Error checking auth status: $_error');
     }
     
     notifyListeners();
@@ -73,7 +71,6 @@ class AuthProvider with ChangeNotifier {
     } catch (e) {
       _error = e.toString();
       _status = AuthStatus.unauthenticated;
-      print('Error during registration: $_error');
       notifyListeners();
       return false;
     }
@@ -92,7 +89,6 @@ class AuthProvider with ChangeNotifier {
       
       await _authService.login(request);
       _currentUser = await _authService.getCurrentUser();
-      print("Login successful - User: ${_currentUser?.name}, isAdmin: ${_currentUser?.isAdmin}"); // Debug log
       _status = AuthStatus.authenticated;
       
       notifyListeners();
@@ -100,7 +96,6 @@ class AuthProvider with ChangeNotifier {
     } catch (e) {
       _error = e.toString();
       _status = AuthStatus.unauthenticated;
-      print('Error during login: $_error');
       notifyListeners();
       return false;
     }
@@ -115,7 +110,8 @@ Future<void> logout() async {
         final userProvider = Provider.of<UserProvider>(context, listen: false);
         userProvider.clear();
       } catch (e) {
-        print('Error getting UserProvider: $e');
+      _error = e.toString();
+      _status = AuthStatus.unauthenticated;
       }
     }
     
@@ -124,7 +120,6 @@ Future<void> logout() async {
     _status = AuthStatus.unauthenticated;
   } catch (e) {
     _error = e.toString();
-    print('Error during logout: $_error');
     _status = AuthStatus.unauthenticated;
   }
   notifyListeners();
@@ -133,11 +128,9 @@ Future<void> logout() async {
   Future<void> refreshUser() async {
     try {
       _currentUser = await _authService.getCurrentUser();
-      print("User refreshed - isAdmin: ${_currentUser?.isAdmin}"); // Debug log
       notifyListeners();
     } catch (e) {
       _error = e.toString();
-      print('Error refreshing user: $_error');
       notifyListeners();
     }
   }

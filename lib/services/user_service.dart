@@ -35,6 +35,11 @@ class UserService {
     return (json as List).map((item) => Event.fromJson(item)).toList();
   }
 
+  Future<User> getCurrentUser() async {
+    final json = await _apiClient.get('/user/current');
+    return User.fromJson(json);
+  }
+
   Future<void> deleteCurrentUser() async {
     await _apiClient.delete('/user/current');
   }

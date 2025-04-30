@@ -76,10 +76,10 @@ class HelpSupportPage extends StatelessWidget {
         Container(
           padding: EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
             ),
           ),
           child: Column(
@@ -192,7 +192,7 @@ class HelpSupportPage extends StatelessWidget {
     return Container(
       margin: EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.05),
+        color: Colors.white.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(12),
       ),
       child: ExpansionTile(
@@ -236,7 +236,7 @@ class HelpSupportPage extends StatelessWidget {
         width: 40,
         height: 40,
         decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.secondary.withOpacity(0.1),
+          color: Theme.of(context).colorScheme.secondary.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(8),
         ),
         child: Icon(

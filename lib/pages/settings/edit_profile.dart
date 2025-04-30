@@ -14,10 +14,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _lastNameController = TextEditingController();
-  
+
   bool _isLoading = false;
   int _selectedAvatarIndex = 0;
-  
+
   // List of avatar options with their background colors
   final List<AvatarOption> _avatarOptions = [
     AvatarOption(backgroundCode: '0D8ABC', index: 0), // Blue
@@ -34,12 +34,35 @@ class _EditProfilePageState extends State<EditProfilePage> {
     _loadUserData();
   }
 
-  void _loadUserData() {
-    final user = Provider.of<UserProvider>(context, listen: false).currentUser;
-    if (user != null) {
-      _nameController.text = user.name;
-      _lastNameController.text = user.lastName;
-      _selectedAvatarIndex = user.avatarId % _avatarOptions.length; // Use modulo to handle out of range avatarIds
+  Future<void> _loadUserData() async {
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      await userProvider.fetchCurrentUser();
+
+      final user = userProvider.currentUser;
+      if (user != null) {
+        // Update form fields with current user data
+        setState(() {
+          _nameController.text = user.name;
+          _lastNameController.text = user.lastName;
+          _selectedAvatarIndex = user.avatarId;
+        });
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error loading user data: $e')));
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -58,40 +81,43 @@ class _EditProfilePageState extends State<EditProfilePage> {
     });
 
     try {
+      // Get providers before any async operations
       final userProvider = Provider.of<UserProvider>(context, listen: false);
-      
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+
       // Update profile details (name, lastName)
       bool profileSuccess = await userProvider.updateUserProfile(
         _nameController.text,
         _lastNameController.text,
       );
-      
+
       // Update avatar if needed
       final currentUser = userProvider.currentUser;
       if (currentUser != null && _selectedAvatarIndex != currentUser.avatarId) {
-        bool avatarSuccess = await userProvider.updateAvatar(_selectedAvatarIndex);
+        bool avatarSuccess = await userProvider.updateAvatar(
+          _selectedAvatarIndex,
+        );
         if (!avatarSuccess) {
           throw Exception('Failed to update avatar');
         }
       }
-      
+
       // Update the auth provider to refresh user data
       if (profileSuccess) {
-        final authProvider = Provider.of<AuthProvider>(context, listen: false);
         await authProvider.refreshUser();
       }
-      
+
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Profile updated successfully')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Profile updated successfully')));
         Navigator.pop(context);
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to update profile: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to update profile: $e')));
       }
     } finally {
       if (mounted) {
@@ -104,9 +130,11 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
   String _getAvatarUrl(int index, String firstName, String lastName) {
     final background = _avatarOptions[index].backgroundCode;
-    final String initials = ((firstName.isNotEmpty ? firstName[0] : '') + 
-                            (lastName.isNotEmpty ? lastName[0] : '')).toUpperCase();
-    
+    final String initials =
+        ((firstName.isNotEmpty ? firstName[0] : '') +
+                (lastName.isNotEmpty ? lastName[0] : ''))
+            .toUpperCase();
+
     return 'https://ui-avatars.com/api/?background=$background&color=fff&name=$initials&size=256';
   }
 
@@ -166,21 +194,23 @@ class _EditProfilePageState extends State<EditProfilePage> {
   Widget _buildAvatarSelector() {
     final userProvider = Provider.of<UserProvider>(context);
     final user = userProvider.currentUser;
-    
+
     // Default values in case user is null
     String firstName = _nameController.text;
     String lastName = _lastNameController.text;
-    
+
     if (user != null) {
       firstName = user.name;
       lastName = user.lastName;
     }
-    
+
     return Column(
       children: [
         CircleAvatar(
           radius: 60,
-          backgroundImage: NetworkImage(_getAvatarUrl(_selectedAvatarIndex, firstName, lastName)),
+          backgroundImage: NetworkImage(
+            _getAvatarUrl(_selectedAvatarIndex, firstName, lastName),
+          ),
         ),
         SizedBox(height: 16),
         Text(
@@ -192,7 +222,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
           ),
         ),
         SizedBox(height: 16),
-        Container(
+        SizedBox(
           height: 80,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
@@ -210,16 +240,17 @@ class _EditProfilePageState extends State<EditProfilePage> {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: _selectedAvatarIndex == avatarOption.index
-                          ? Theme.of(context).colorScheme.tertiary
-                          : Colors.transparent,
+                      color:
+                          _selectedAvatarIndex == avatarOption.index
+                              ? Theme.of(context).colorScheme.tertiary
+                              : Colors.transparent,
                       width: 3,
                     ),
                   ),
                   child: CircleAvatar(
                     radius: 30,
                     backgroundImage: NetworkImage(
-                      _getAvatarUrl(avatarOption.index, firstName, lastName)
+                      _getAvatarUrl(avatarOption.index, firstName, lastName),
                     ),
                   ),
                 ),
@@ -256,7 +287,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
           decoration: InputDecoration(
             hintText: hint,
             hintStyle: TextStyle(color: Colors.grey[500]),
-            fillColor: Colors.white.withOpacity(0.1),
+            fillColor: Colors.white.withValues(alpha: 0.1),
             filled: true,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
@@ -281,12 +312,13 @@ class _EditProfilePageState extends State<EditProfilePage> {
             borderRadius: BorderRadius.circular(12),
           ),
         ),
-        child: _isLoading
-            ? CircularProgressIndicator(color: Colors.white)
-            : Text(
-                "Save Changes",
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
+        child:
+            _isLoading
+                ? CircularProgressIndicator(color: Colors.white)
+                : Text(
+                  "Save Changes",
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
       ),
     );
   }
@@ -296,6 +328,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
 class AvatarOption {
   final String backgroundCode;
   final int index;
-  
+
   AvatarOption({required this.backgroundCode, required this.index});
 }

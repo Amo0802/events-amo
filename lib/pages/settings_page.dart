@@ -177,7 +177,7 @@ class _SettingsPageState extends State<SettingsPage> {
         width: 40,
         height: 40,
         decoration: BoxDecoration(
-          color: (iconColor ?? theme.colorScheme.secondary).withOpacity(0.1),
+          color: (iconColor ?? theme.colorScheme.secondary).withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Icon(icon, color: iconColor ?? theme.colorScheme.secondary),

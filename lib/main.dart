@@ -6,6 +6,7 @@ import 'package:events_amo/services/api_client.dart';
 import 'package:events_amo/services/auth_service.dart';
 import 'package:events_amo/services/event_service.dart';
 import 'package:events_amo/services/navigation_service.dart';
+import 'package:events_amo/services/notification_service.dart';
 import 'package:events_amo/services/user_profile_service.dart';
 import 'package:events_amo/services/user_service.dart';
 import 'package:flutter/material.dart';
@@ -16,6 +17,10 @@ import 'package:provider/provider.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: ".env");
+
+  // Initialize notification service
+  final notificationService = NotificationService();
+  await notificationService.initialize();
 
   final apiClient = ApiClient();
   final authService = AuthService(apiClient);
@@ -28,7 +33,9 @@ void main() async {
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider(authService)),
         ChangeNotifierProvider(create: (_) => EventProvider(eventService)),
-        ChangeNotifierProvider(create: (_) => UserProvider(userService, profileService)),
+        ChangeNotifierProvider(
+          create: (_) => UserProvider(userService, profileService),
+        ),
       ],
       child: EventsApp(),
     ),

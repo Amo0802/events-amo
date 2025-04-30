@@ -17,14 +17,36 @@ class HomePage extends StatefulWidget {
 
 class HomePageState extends State<HomePage> {
   bool _isRefreshing = false;
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
+    
+    // Add scroll listener for pagination
+    _scrollController.addListener(_scrollListener);
+    
     // Fetch data when widget is initialized
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _fetchData();
     });
+  }
+  
+  @override
+  void dispose() {
+    _scrollController.removeListener(_scrollListener);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _scrollListener() {
+    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200) {
+      // Load more data when we're 200 pixels from the bottom
+      final provider = Provider.of<EventProvider>(context, listen: false);
+      if (!provider.isLoadingMore && provider.hasMoreMainEvents) {
+        provider.loadMoreMainEvents();
+      }
+    }
   }
 
   Future<void> _fetchData() async {
@@ -42,7 +64,6 @@ class HomePageState extends State<HomePage> {
     try {
       await _fetchData();
     } catch (e) {
-      // Show error only if needed
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Failed to refresh data. Please try again.')),
@@ -92,6 +113,7 @@ class HomePageState extends State<HomePage> {
               color: Theme.of(context).colorScheme.secondary,
               backgroundColor: Theme.of(context).scaffoldBackgroundColor,
               child: CustomScrollView(
+                controller: _scrollController,
                 slivers: [
                   _buildAppBar(context, isAdmin),
                   _buildPromotedEvents(
@@ -102,10 +124,24 @@ class HomePageState extends State<HomePage> {
                     context,
                     provider.mainEvents?.content ?? [],
                   ),
-                  // Add some extra space at the bottom
+                  // Add loading indicator at the bottom if more items are available
+                  if (provider.mainEvents != null && provider.hasMoreMainEvents)
+                    SliverToBoxAdapter(
+                      child: provider.isLoadingMore
+                          ? Container(
+                              padding: EdgeInsets.symmetric(vertical: 16),
+                              alignment: Alignment.center,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Theme.of(context).colorScheme.secondary,
+                              ),
+                            )
+                          : SizedBox(height: 60), // Spacer
+                    ),
+                  // Add extra space at bottom
                   SliverToBoxAdapter(
-                    child: SizedBox(height: 80),
-                  )
+                    child: SizedBox(height: 20),
+                  ),
                 ],
               ),
             );
@@ -216,20 +252,25 @@ class HomePageState extends State<HomePage> {
                 ),
                 SizedBox(width: 8),
                 Expanded(
-                  // Wrap in Expanded
                   child: Text(
                     "Upcoming Official Events",
                     style: Theme.of(context).textTheme.titleLarge,
-                    overflow: TextOverflow.ellipsis, // Add this
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ],
             ),
           );
         }
-        final event = events[index - 1];
+        
+        final eventIndex = index - 1;
+        if (eventIndex >= events.length) {
+          return null;
+        }
+        
+        final event = events[eventIndex];
         return StandardEventCard(event: event);
-      }, childCount: events.length + 1),
+      }, childCount: events.length + 1), // +1 for the header
     );
   }
 }

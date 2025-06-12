@@ -37,7 +37,6 @@ class NotificationService {
         // Handle notification tap
         if (response.payload != null) {
           // Navigate to event details or any other action
-          print('Notification payload: ${response.payload}');
         }
       },
     );
@@ -65,7 +64,6 @@ class NotificationService {
 
     // Skip if the notification time is in the past
     if (notificationTime.isBefore(tz.TZDateTime.now(tz.local))) {
-      print('Notification time is in the past, skipping for event ${event.name}');
       return notificationId;
     }
 
@@ -102,7 +100,6 @@ class NotificationService {
       payload: 'event_${event.id}',
     );
 
-    print('Scheduled notification for event: ${event.name} with ID: $notificationId');
     return notificationId;
   }
 
@@ -110,13 +107,11 @@ class NotificationService {
   Future<void> cancelEventNotification(Event event) async {
     final int notificationId = event.id.hashCode;
     await _notificationsPlugin.cancel(notificationId);
-    print('Cancelled notification for event: ${event.name} with ID: $notificationId');
   }
 
   // Cancel all notifications
   Future<void> cancelAllNotifications() async {
     await _notificationsPlugin.cancelAll();
-    print('Cancelled all notifications');
   }
 
   // Helper method to format time

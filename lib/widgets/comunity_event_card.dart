@@ -4,6 +4,7 @@ import 'package:events_amo/pages/login_page.dart';
 import 'package:events_amo/providers/auth_provider.dart';
 import 'package:events_amo/providers/user_provider.dart';
 import 'package:events_amo/utils/notification_permission_handler.dart';
+import 'package:events_amo/utils/width_constraint_wrapper.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -28,7 +29,7 @@ class _CommunityEventCardState extends State<CommunityEventCard> {
     if (authProvider.status != AuthStatus.authenticated) {
       Navigator.of(
         context,
-      ).push(MaterialPageRoute(builder: (_) => LoginPage()));
+      ).push(MaterialPageRoute(builder: (_) => const WidthConstraintWrapper(child: LoginPage())));
       return;
     }
 
@@ -59,7 +60,7 @@ class _CommunityEventCardState extends State<CommunityEventCard> {
     if (authProvider.status != AuthStatus.authenticated) {
       Navigator.of(
         context,
-      ).push(MaterialPageRoute(builder: (_) => LoginPage()));
+      ).push(MaterialPageRoute(builder: (_) => const WidthConstraintWrapper(child: LoginPage())));
       return;
     }
 
@@ -69,7 +70,7 @@ class _CommunityEventCardState extends State<CommunityEventCard> {
     if (!isAttending) {
       final hasPermission =
           await NotificationPermissionHandler.requestPermission(context);
-      if (hasPermission) {
+      if (mounted && hasPermission) {
         // Inform user about the notification
         NotificationPermissionHandler.showNotificationConfirmation(
           context,
@@ -111,7 +112,7 @@ class _CommunityEventCardState extends State<CommunityEventCard> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => EventDetailPage(event: widget.event),
+            builder: (context) => WidthConstraintWrapper(child: EventDetailPage(event: widget.event)),
           ),
         );
       },

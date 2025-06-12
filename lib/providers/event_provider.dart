@@ -316,12 +316,11 @@ class EventProvider with ChangeNotifier {
     } catch (e) {
       _isLoadingMore = false;
       _error = e.toString();
-      print('Error loading more events: $_error');
       notifyListeners();
     }
   }
 
-  // Add similar methods for other event types (main, promoted, filtered, search)
+  // Similar methods for other event types (main, promoted, filtered, search)
   Future<void> loadMoreMainEvents() async {
     if (_isLoadingMore || !_hasMoreMainEvents || _mainEvents == null) return;
 
@@ -364,7 +363,6 @@ class EventProvider with ChangeNotifier {
     } catch (e) {
       _isLoadingMore = false;
       _error = e.toString();
-      print('Error loading more main events: $_error');
       notifyListeners();
     }
   }

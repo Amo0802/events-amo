@@ -37,7 +37,6 @@ class UserProvider with ChangeNotifier {
     } catch (e) {
       _isLoading = false;
       _error = e.toString();
-      print('Error fetching saved events: $_error');
       notifyListeners();
     }
   }
@@ -61,7 +60,6 @@ class UserProvider with ChangeNotifier {
     } catch (e) {
       _isLoading = false;
       _error = e.toString();
-      print('Error fetching attending events: $_error');
       notifyListeners();
     }
   }
@@ -88,7 +86,6 @@ class UserProvider with ChangeNotifier {
     } catch (e) {
       _isLoading = false;
       _error = e.toString();
-      print('Error toggling save event: $_error');
       notifyListeners();
       return false;
     }
@@ -130,7 +127,6 @@ class UserProvider with ChangeNotifier {
     } catch (e) {
       _isLoading = false;
       _error = e.toString();
-      print('Error toggling attend event: $_error');
       notifyListeners();
       return false;
     }
@@ -182,7 +178,6 @@ class UserProvider with ChangeNotifier {
     } catch (e) {
       _isLoading = false;
       _error = e.toString();
-      print('Error fetching current user: $_error');
       notifyListeners();
     }
   }
@@ -204,7 +199,6 @@ class UserProvider with ChangeNotifier {
     } catch (e) {
       _isLoading = false;
       _error = e.toString();
-      print('Error deleting user: $_error');
       notifyListeners();
       return false;
     }
@@ -228,7 +222,6 @@ class UserProvider with ChangeNotifier {
     } catch (e) {
       _isLoading = false;
       _error = e.toString();
-      print('Error updating profile: $_error');
       notifyListeners();
       return false;
     }
@@ -251,7 +244,6 @@ class UserProvider with ChangeNotifier {
     } catch (e) {
       _isLoading = false;
       _error = e.toString();
-      print('Error updating avatar: $_error');
       notifyListeners();
       return false;
     }
@@ -274,7 +266,6 @@ class UserProvider with ChangeNotifier {
     } catch (e) {
       _isLoading = false;
       _error = e.toString();
-      print('Error updating password: $_error');
       notifyListeners();
       return false;
     }
@@ -344,7 +335,6 @@ class UserProvider with ChangeNotifier {
     } catch (e) {
       _isLoading = false;
       _error = e.toString();
-      print('Error submitting event proposal: $_error');
       notifyListeners();
       return false;
     }
@@ -369,7 +359,6 @@ class UserProvider with ChangeNotifier {
     } catch (e) {
       _isLoading = false;
       _error = e.toString();
-      print('Error making user admin: $_error');
       notifyListeners();
       return false;
     }

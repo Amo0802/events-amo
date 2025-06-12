@@ -9,14 +9,15 @@ import 'package:events_amo/services/navigation_service.dart';
 import 'package:events_amo/services/notification_service.dart';
 import 'package:events_amo/services/user_profile_service.dart';
 import 'package:events_amo/services/user_service.dart';
+import 'package:events_amo/utils/width_constraint_wrapper.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
+// import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await dotenv.load(fileName: ".env");
+  // await dotenv.load(fileName: ".env");
 
   // Initialize notification service
   final notificationService = NotificationService();
@@ -68,7 +69,7 @@ class EventsApp extends StatelessWidget {
           onSurface: Colors.white,
         ),
       ),
-      home: MainPage(),
+      home: WidthConstraintWrapper(child: MainPage()),
       debugShowCheckedModeBanner: false,
     );
   }

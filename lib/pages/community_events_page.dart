@@ -16,7 +16,7 @@ class CommunityEventsPageState extends State<CommunityEventsPage> {
   bool _isRefreshing = false;
   final ScrollController _scrollController = ScrollController();
 
-  final List<String> cities = ['ALL', 'PODGORICA', 'BERANE', 'NIKSIC'];
+  final List<String> cities = ['ALL', 'SPAIN', 'FRANCE', 'GERMANY', 'ITALY'];
 
   final List<String> categories = [
     'ALL',
@@ -208,14 +208,18 @@ class CommunityEventsPageState extends State<CommunityEventsPage> {
             return Padding(
               padding: const EdgeInsets.symmetric(horizontal: 4),
               child: FilterChip(
-                label: Text(
-                  category.toUpperCase(),
-                  style: TextStyle(
-                    color:
-                        isSelected
-                            ? Colors.white
-                            : Theme.of(context).colorScheme.secondary,
-                    fontWeight: FontWeight.w600,
+                label: Padding(
+                  padding: const EdgeInsets.fromLTRB(0, 0, 8.0, 0),
+                  child: Text(
+                    overflow: TextOverflow.visible,
+                    category.toUpperCase(),
+                    style: TextStyle(
+                      color:
+                          isSelected
+                              ? Colors.white
+                              : Theme.of(context).colorScheme.secondary,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
                 backgroundColor:

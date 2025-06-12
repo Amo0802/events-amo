@@ -8,6 +8,7 @@ import 'package:events_amo/pages/create_events.dart';
 import 'package:events_amo/providers/auth_provider.dart';
 import 'package:events_amo/providers/event_provider.dart';
 import 'package:events_amo/providers/user_provider.dart';
+import 'package:events_amo/utils/width_constraint_wrapper.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -86,7 +87,7 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
       } else {
         Navigator.of(
           context,
-        ).push(MaterialPageRoute(builder: (_) => LoginPage()));
+        ).push(MaterialPageRoute(builder: (_) => const WidthConstraintWrapper(child: LoginPage())));
       }
     } else {
       setState(() {
@@ -102,7 +103,7 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
     if (authProvider.status != AuthStatus.authenticated) {
       Navigator.of(
         context,
-      ).push(MaterialPageRoute(builder: (_) => LoginPage()));
+      ).push(MaterialPageRoute(builder: (_) => const WidthConstraintWrapper(child: LoginPage())));
       return;
     }
 
@@ -124,7 +125,7 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
     ("Opening regular user create event page");
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => CreateEventPage()),
+      MaterialPageRoute(builder: (context) => const WidthConstraintWrapper(child: CreateEventPage())),
     );
   }
 
@@ -163,7 +164,7 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
                   // Then navigate to CreateEventPage
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => CreateEventPage()),
+                    MaterialPageRoute(builder: (context) => const WidthConstraintWrapper(child: CreateEventPage())),
                   );
                 }
               },

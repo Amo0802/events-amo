@@ -16,7 +16,6 @@ Future<User> updateUserProfile(String newName, String newLastName) async {
       });
     return User.fromJson(json);
   } catch (e) {
-    print('Error updating user profile: $e');
     rethrow;
   }
 }
@@ -30,7 +29,6 @@ Future<User> updateUserProfile(String newName, String newLastName) async {
         });
       return User.fromJson(json);
     } catch (e) {
-      print('Error updating user avatar: $e');
       rethrow;
     }
   }
@@ -44,7 +42,6 @@ Future<User> updateUserProfile(String newName, String newLastName) async {
         'newPassword': newPassword
       });
     } catch (e) {
-      print('Error updating user password: $e');
       rethrow;
     }
   }

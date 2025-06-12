@@ -84,7 +84,7 @@ class HomePageState extends State<HomePage> {
       context: context,
       builder: (_) => MakeAdminDialog(),
     ).then((success) {
-      if (success == true) {
+      if (mounted && success == true) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('User has been made admin successfully'),

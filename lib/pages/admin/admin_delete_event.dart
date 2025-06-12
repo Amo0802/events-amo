@@ -15,7 +15,7 @@ class AdminDeleteEventPage extends StatefulWidget {
 class _AdminDeleteEventPageState extends State<AdminDeleteEventPage> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _idController = TextEditingController();
-  
+
   bool _isLoading = false;
   bool _isSearching = false;
   String? _errorMessage;
@@ -53,7 +53,7 @@ class _AdminDeleteEventPageState extends State<AdminDeleteEventPage> {
     try {
       final eventProvider = Provider.of<EventProvider>(context, listen: false);
       await eventProvider.fetchEventById(eventId);
-      
+
       if (eventProvider.selectedEvent == null) {
         setState(() {
           _errorMessage = "Event not found";
@@ -77,8 +77,9 @@ class _AdminDeleteEventPageState extends State<AdminDeleteEventPage> {
     }
   }
 
-  Future<void> _deleteEvent() async {
+  Future _deleteEvent() async {
     if (_loadedEvent == null) {
+      if (!mounted) return;
       setState(() {
         _errorMessage = "Please load an event first";
       });
@@ -92,10 +93,7 @@ class _AdminDeleteEventPageState extends State<AdminDeleteEventPage> {
       builder: (BuildContext context) {
         return AlertDialog(
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-          title: Text(
-            "Confirm Delete",
-            style: TextStyle(color: Colors.white),
-          ),
+          title: Text("Confirm Delete", style: TextStyle(color: Colors.white)),
           content: Text(
             "Are you sure you want to delete this event? This action cannot be undone.",
             style: TextStyle(color: Colors.white70),
@@ -106,9 +104,7 @@ class _AdminDeleteEventPageState extends State<AdminDeleteEventPage> {
               child: Text("Cancel"),
             ),
             TextButton(
-              style: TextButton.styleFrom(
-                foregroundColor: Colors.red,
-              ),
+              style: TextButton.styleFrom(foregroundColor: Colors.red),
               onPressed: () => Navigator.of(context).pop(true),
               child: Text("Delete"),
             ),
@@ -117,9 +113,7 @@ class _AdminDeleteEventPageState extends State<AdminDeleteEventPage> {
       },
     );
 
-    if (confirm != true) {
-      return;
-    }
+    if (confirm != true || !mounted) return;
 
     setState(() {
       _isLoading = true;
@@ -129,6 +123,8 @@ class _AdminDeleteEventPageState extends State<AdminDeleteEventPage> {
     try {
       final eventProvider = Provider.of<EventProvider>(context, listen: false);
       final success = await eventProvider.deleteEvent(_loadedEvent!.id);
+
+      if (!mounted) return;
 
       if (success) {
         _showSuccessDialog("Event deleted successfully");
@@ -143,14 +139,17 @@ class _AdminDeleteEventPageState extends State<AdminDeleteEventPage> {
         _showSnackBar(_errorMessage!);
       }
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _errorMessage = e.toString();
       });
       _showSnackBar(_errorMessage!);
     } finally {
-      setState(() {
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -175,9 +174,9 @@ class _AdminDeleteEventPageState extends State<AdminDeleteEventPage> {
   }
 
   void _showSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override
@@ -191,27 +190,28 @@ class _AdminDeleteEventPageState extends State<AdminDeleteEventPage> {
           style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
         ),
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : Form(
-              key: _formKey,
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildSearchEventSection(context),
-                    const SizedBox(height: 20),
-                    if (_loadedEvent != null) ...[
-                      _buildEventPreview(context, _loadedEvent!),
-                      const SizedBox(height: 30),
-                      _buildDeleteButton(context),
+      body:
+          _isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : Form(
+                key: _formKey,
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildSearchEventSection(context),
+                      const SizedBox(height: 20),
+                      if (_loadedEvent != null) ...[
+                        _buildEventPreview(context, _loadedEvent!),
+                        const SizedBox(height: 30),
+                        _buildDeleteButton(context),
+                      ],
+                      const SizedBox(height: 20),
                     ],
-                    const SizedBox(height: 20),
-                  ],
+                  ),
                 ),
               ),
-            ),
     );
   }
 
@@ -244,7 +244,10 @@ class _AdminDeleteEventPageState extends State<AdminDeleteEventPage> {
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide.none,
                   ),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 16,
+                  ),
                 ),
                 style: const TextStyle(color: Colors.white),
               ),
@@ -259,13 +262,17 @@ class _AdminDeleteEventPageState extends State<AdminDeleteEventPage> {
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
-              child: _isSearching 
-                ? SizedBox(
-                    height: 24,
-                    width: 24,
-                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                  ) 
-                : Text("Find Event"),
+              child:
+                  _isSearching
+                      ? SizedBox(
+                        height: 24,
+                        width: 24,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
+                      )
+                      : Text("Find Event"),
             ),
           ],
         ),
@@ -299,7 +306,10 @@ class _AdminDeleteEventPageState extends State<AdminDeleteEventPage> {
           _buildInfoRow("ID", "${event.id}"),
           _buildInfoRow("Name", event.name),
           _buildInfoRow("Location", "${event.address}, ${event.city}"),
-          _buildInfoRow("Date", DateFormat('MMM d, yyyy – h:mm a').format(event.startDateTime)),
+          _buildInfoRow(
+            "Date",
+            DateFormat('MMM d, yyyy – h:mm a').format(event.startDateTime),
+          ),
           _buildInfoRow("Categories", event.categories.join(', ')),
           _buildInfoRow("Price", "${event.price} €"),
           Container(
@@ -343,12 +353,7 @@ class _AdminDeleteEventPageState extends State<AdminDeleteEventPage> {
               ),
             ),
           ),
-          Expanded(
-            child: Text(
-              value,
-              style: TextStyle(color: Colors.white),
-            ),
-          ),
+          Expanded(child: Text(value, style: TextStyle(color: Colors.white))),
         ],
       ),
     );

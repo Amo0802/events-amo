@@ -5,6 +5,7 @@ import 'package:events_amo/pages/settings/change_password.dart';
 import 'package:events_amo/pages/settings/edit_profile.dart';
 import 'package:events_amo/pages/settings/help_and_support.dart';
 import 'package:events_amo/pages/settings/notification_page.dart';
+import 'package:events_amo/utils/width_constraint_wrapper.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:events_amo/providers/auth_provider.dart';
@@ -66,7 +67,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 
                 // Use stored navigator reference
                 navigator.pushAndRemoveUntil(
-                  MaterialPageRoute(builder: (_) => MainPage(initialTabIndex: 0)),
+                  MaterialPageRoute(builder: (_) => const WidthConstraintWrapper(child: MainPage(initialTabIndex: 0))),
                   (route) => false,
                 );
               }();
@@ -129,7 +130,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 if (success) {
                   await authProvider.logout();
                   navigator.pushAndRemoveUntil(
-                    MaterialPageRoute(builder: (_) => MainPage(initialTabIndex: 0)),
+                    MaterialPageRoute(builder: (_) => const WidthConstraintWrapper(child: MainPage(initialTabIndex: 0))),
                     (route) => false,
                   );
                 } else {
@@ -228,7 +229,7 @@ class _SettingsPageState extends State<SettingsPage> {
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => EditProfilePage()),
+                  MaterialPageRoute(builder: (context) => const WidthConstraintWrapper(child: EditProfilePage())),
                 );
               },
             ),
@@ -238,7 +239,7 @@ class _SettingsPageState extends State<SettingsPage> {
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => NotificationsPage()),
+                  MaterialPageRoute(builder: (context) => const WidthConstraintWrapper(child: NotificationsPage())),
                 );
               },
             ),
@@ -248,7 +249,7 @@ class _SettingsPageState extends State<SettingsPage> {
             //   onTap: () {
             //     Navigator.push(
             //       context,
-            //       MaterialPageRoute(builder: (context) => ChangeEmailPage()),
+            //       MaterialPageRoute(builder: (context) => const WidthConstraintWrapper(child: ChangeEmailPage())),
             //     );
             //   },
             // ),
@@ -258,7 +259,7 @@ class _SettingsPageState extends State<SettingsPage> {
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => ChangePasswordPage()),
+                  MaterialPageRoute(builder: (context) => const WidthConstraintWrapper(child: ChangePasswordPage())),
                 );
               },
             ),
@@ -280,7 +281,7 @@ class _SettingsPageState extends State<SettingsPage> {
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => HelpSupportPage()),
+                  MaterialPageRoute(builder: (context) => const WidthConstraintWrapper(child: HelpSupportPage())),
                 );
               },
             ),
@@ -290,7 +291,7 @@ class _SettingsPageState extends State<SettingsPage> {
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => AboutPage()),
+                  MaterialPageRoute(builder: (context) => const WidthConstraintWrapper(child: AboutPage())),
                 );
               },
             ),

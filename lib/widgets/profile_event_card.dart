@@ -1,5 +1,6 @@
 import "package:events_amo/models/event.dart";
 import "package:events_amo/pages/events_detail_page.dart";
+import "package:events_amo/utils/width_constraint_wrapper.dart";
 import "package:flutter/material.dart";
 import "package:intl/intl.dart";
 
@@ -21,7 +22,7 @@ class ProfileEventCard extends StatelessWidget {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => EventDetailPage(event: event),
+              builder: (context) => WidthConstraintWrapper(child: EventDetailPage(event: event)),
             ),
           );
         },

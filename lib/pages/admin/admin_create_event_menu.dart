@@ -1,6 +1,7 @@
 import 'package:events_amo/pages/admin/admin_create_event.dart';
 import 'package:events_amo/pages/admin/admin_edit_event.dart';
 import 'package:events_amo/pages/admin/admin_delete_event.dart';
+import 'package:events_amo/utils/width_constraint_wrapper.dart';
 import 'package:flutter/material.dart';
 
 class AdminCreateEventMenu extends StatelessWidget {
@@ -39,7 +40,7 @@ class AdminCreateEventMenu extends StatelessWidget {
               () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => AdminCreateEventPage()),
+                  MaterialPageRoute(builder: (context) => const WidthConstraintWrapper(child: AdminCreateEventPage())),
                 );
                 onClose();
               }
@@ -53,7 +54,7 @@ class AdminCreateEventMenu extends StatelessWidget {
               () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => AdminEditEventPage()),
+                  MaterialPageRoute(builder: (context) => const WidthConstraintWrapper(child: AdminEditEventPage())),
                 );
                 onClose();
               }
@@ -67,7 +68,7 @@ class AdminCreateEventMenu extends StatelessWidget {
               () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => AdminDeleteEventPage()),
+                  MaterialPageRoute(builder: (context) => const WidthConstraintWrapper(child: AdminDeleteEventPage())),
                 );
                 onClose();
               }

@@ -4,6 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 class HelpSupportPage extends StatelessWidget {
   const HelpSupportPage({super.key});
 
+  // ignore: unused_element
   Future<void> _launchUrl(String url) async {
     final uri = Uri.parse(url);
     if (await canLaunchUrl(uri)) {
@@ -103,7 +104,7 @@ class HelpSupportPage extends StatelessWidget {
                     borderRadius: BorderRadius.circular(8),
                   ),
                 ),
-                onPressed: () => _launchEmail("support@yourapp.com"),
+                onPressed: () => _launchEmail("arminramusovic11@gmail.com"),
               ),
             ],
           ),
@@ -137,11 +138,6 @@ class HelpSupportPage extends StatelessWidget {
         ),
         _buildFaqItem(
           context: context,
-          question: "How do I RSVP to an event?",
-          answer: "To RSVP to an event, tap the 'Attend' button on the event card or the 'Attend Event' button on the event details page. Your upcoming events will appear in your profile under the 'Upcoming' tab.",
-        ),
-        _buildFaqItem(
-          context: context,
           question: "Can I edit or delete an event I created?",
           answer: "Currently, you cannot directly edit events. Please contact our support team if you need to make changes to an event you've created.",
         ),
@@ -166,19 +162,34 @@ class HelpSupportPage extends StatelessWidget {
           context: context,
           title: "User Guide",
           icon: Icons.menu_book_outlined,
-          onTap: () => _launchUrl("https://yourapp.com/guide"),
+          onTap: () => 
+          // TODO
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text("Coming soon")),
+            ),
+            // _launchUrl("https://yourapp.com/guide"),
         ),
         _buildLinkTile(
           context: context,
           title: "Privacy Policy",
           icon: Icons.privacy_tip_outlined,
-          onTap: () => _launchUrl("https://yourapp.com/privacy"),
+          onTap: () => 
+          // TODO
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text("Coming soon")),
+            ),
+          // _launchUrl("https://yourapp.com/privacy"),
         ),
         _buildLinkTile(
           context: context,
           title: "Terms of Service",
           icon: Icons.description_outlined,
-          onTap: () => _launchUrl("https://yourapp.com/terms"),
+          onTap: () =>
+          // TODO
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text("Coming soon")),
+            ),
+          //  _launchUrl("https://yourapp.com/terms"),
         ),
       ],
     );

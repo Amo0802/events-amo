@@ -20,8 +20,14 @@ class NotificationPermissionHandler {
 
   // Show a dialog asking for notification permission
   static Future<bool> requestPermission(BuildContext context) async {
-    if (!await shouldAskPermission()) {
-      return true; // Already asked, assume granted
+    // Check permission status before showing dialog
+    final shouldAsk = await shouldAskPermission();
+    
+    // Guard context usage after async operation
+    if (!context.mounted) return false;
+    
+    if (!shouldAsk) {
+      return true;
     }
 
     bool permissionGranted = false;
@@ -29,7 +35,7 @@ class NotificationPermissionHandler {
     await showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (BuildContext context) {
+      builder: (BuildContext dialogContext) {
         return AlertDialog(
           title: Text('Event Reminders'),
           content: Text(
@@ -41,14 +47,14 @@ class NotificationPermissionHandler {
               child: Text('No Thanks'),
               onPressed: () {
                 permissionGranted = false;
-                Navigator.of(context).pop();
+                Navigator.of(dialogContext).pop();
               },
             ),
             ElevatedButton(
               child: Text('Allow'),
               onPressed: () {
                 permissionGranted = true;
-                Navigator.of(context).pop();
+                Navigator.of(dialogContext).pop();
               },
             ),
           ],
@@ -69,6 +75,9 @@ class NotificationPermissionHandler {
 
   // Show a snackbar to inform the user about the notification
   static void showNotificationConfirmation(BuildContext context, Event event) {
+    // Check if context is still mounted before using it
+    if (!context.mounted) return;
+    
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(

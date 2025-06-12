@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'package:http_parser/http_parser.dart';
 import 'package:dio/dio.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart'; // Add this import
 import 'package:image_picker/image_picker.dart';
 
@@ -17,7 +16,7 @@ class ApiClient {
   final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
   final String _tokenKey = 'auth_token';
 
-  ApiClient._internal() : _baseUrl = dotenv.env['API_URL'] ?? 'http://localhost:8080' {
+ApiClient._internal() : _baseUrl = const String.fromEnvironment('API_URL', defaultValue: 'http://localhost:8080') {
     _dio = Dio(BaseOptions(
       baseUrl: _baseUrl,
       contentType: 'application/json',
@@ -67,7 +66,6 @@ class ApiClient {
   Future<dynamic> get(String endpoint, {bool requiresAuth = true}) async {
     try {
       final options = await _getOptions(requiresAuth: requiresAuth);
-      print('GET Request to: $_baseUrl$endpoint');
       final response = await _dio.get(endpoint, options: options);
       return response.data;
     } on DioException catch (e) {
@@ -79,7 +77,6 @@ class ApiClient {
   Future<dynamic> post(String endpoint, dynamic body, {bool requiresAuth = true}) async {
     try {
       final options = await _getOptions(requiresAuth: requiresAuth);
-      print('POST Request to: $_baseUrl$endpoint');
       final response = await _dio.post(endpoint, data: body, options: options);
       return response.data;
     } on DioException catch (e) {
@@ -91,7 +88,6 @@ class ApiClient {
   Future<dynamic> put(String endpoint, dynamic body, {bool requiresAuth = true}) async {
     try {
       final options = await _getOptions(requiresAuth: requiresAuth);
-      print('PUT Request to: $_baseUrl$endpoint');
       final response = await _dio.put(endpoint, data: body, options: options);
       return response.data;
     } on DioException catch (e) {
@@ -103,7 +99,6 @@ class ApiClient {
   Future<dynamic> delete(String endpoint, {bool requiresAuth = true}) async {
     try {
       final options = await _getOptions(requiresAuth: requiresAuth);
-      print('DELETE Request to: $_baseUrl$endpoint');
       final response = await _dio.delete(endpoint, options: options);
       return response.data;
     } on DioException catch (e) {
@@ -115,7 +110,6 @@ class ApiClient {
   Future<Response> postFormData(String endpoint, FormData data, {bool requiresAuth = true}) async {
     try {
       final options = await _getOptions(requiresAuth: requiresAuth);
-      print('POST FormData to: $_baseUrl$endpoint');
       final response = await _dio.post(endpoint, data: data, options: options);
       return response;
     } on DioException catch (e) {
@@ -126,10 +120,6 @@ class ApiClient {
 
   void _handleDioError(DioException error) {
     final status = error.response?.statusCode;
-    final responseData = error.response?.data;
-    
-    print('API Error: Status Code: $status');
-    print('Response data: $responseData');
     
     if (status == 401) {
       throw Exception('Unauthorized: Your session may have expired. Please log in again.');

@@ -66,7 +66,6 @@ class UserService {
         images,
       );
     } catch (e) {
-      print('Error submitting event: $e');
       rethrow;
     }
   }

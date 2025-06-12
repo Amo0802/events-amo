@@ -38,6 +38,7 @@ class SearchPageState extends State<SearchPage> {
         _isSearching = false;
       });
     } catch (e) {
+      if(!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error searching events: $e')),
       );
@@ -57,6 +58,7 @@ class SearchPageState extends State<SearchPage> {
     try {
       await Provider.of<EventProvider>(context, listen: false).loadMoreSearchResults(_currentSearchQuery);
     } catch (e) {
+      if(!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error loading more results: $e')),
       );

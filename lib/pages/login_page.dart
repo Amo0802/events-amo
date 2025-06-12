@@ -1,6 +1,7 @@
 import 'package:events_amo/pages/main_page.dart';
 import 'package:events_amo/pages/register_page.dart';
 import 'package:events_amo/providers/user_provider.dart';
+import 'package:events_amo/utils/width_constraint_wrapper.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:events_amo/providers/auth_provider.dart';
@@ -66,9 +67,10 @@ class LoginPageState extends State<LoginPage> with SingleTickerProviderStateMixi
         await userProvider.fetchSavedEvents();
         await userProvider.fetchAttendingEvents();
           // Replace the current route stack with MainPage and set the index to profile tab (2)
+          if(!mounted) return;
           Navigator.of(context).pushAndRemoveUntil(
             MaterialPageRoute(
-              builder: (context) => MainPage(initialTabIndex: 2),
+              builder: (context) => const WidthConstraintWrapper(child: MainPage(initialTabIndex: 2)),
             ),
             (route) => false, // This removes all previous routes
           );
@@ -228,7 +230,7 @@ class LoginPageState extends State<LoginPage> with SingleTickerProviderStateMixi
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) => RegisterPage(),
+                                    builder: (context) => const WidthConstraintWrapper(child: RegisterPage()),
                                   ),
                                 );
                               },

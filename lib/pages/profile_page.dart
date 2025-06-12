@@ -2,6 +2,7 @@ import 'package:events_amo/models/event.dart';
 import 'package:events_amo/pages/settings_page.dart';
 import 'package:events_amo/providers/auth_provider.dart';
 import 'package:events_amo/providers/user_provider.dart';
+import 'package:events_amo/utils/width_constraint_wrapper.dart';
 import 'package:events_amo/widgets/profile_event_card.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -119,7 +120,7 @@ class ProfilePageState extends State<ProfilePage> {
             // Navigate to settings
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => SettingsPage()),
+              MaterialPageRoute(builder: (context) => const WidthConstraintWrapper(child: SettingsPage())),
             );
           },
         ),

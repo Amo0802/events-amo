@@ -110,13 +110,23 @@ class AboutPage extends StatelessWidget {
           context: context,
           title: "Privacy Policy",
           icon: Icons.privacy_tip_outlined,
-          onTap: () => _launchUrl("https://yourapp.com/privacy"),
+          onTap: () =>                
+          // TODO
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text("Coming soon")),
+            ),
+          // _launchUrl("https://yourapp.com/privacy"),
         ),
         _buildLinkTile(
           context: context,
           title: "Terms of Service",
           icon: Icons.description_outlined,
-          onTap: () => _launchUrl("https://yourapp.com/terms"),
+          onTap: () => 
+          // TODO
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text("Coming soon")),
+            ),
+          // _launchUrl("https://yourapp.com/terms"),
         ),
       ],
     );
@@ -183,7 +193,7 @@ class AboutPage extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                "© 2023 Your Company",
+                "© Amo",
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -192,7 +202,7 @@ class AboutPage extends StatelessWidget {
               ),
               SizedBox(height: 8),
               Text(
-                "Made with ♥ in your location",
+                "Made with ♥",
                 style: TextStyle(
                   color: Colors.grey[300],
                 ),
@@ -207,9 +217,9 @@ class AboutPage extends StatelessWidget {
                   ),
                   SizedBox(width: 8),
                   GestureDetector(
-                    onTap: () => _launchUrl("mailto:contact@yourapp.com"),
+                    onTap: () => _launchUrl("mailto:arminramusovic11@gmail.com"),
                     child: Text(
-                      "contact@yourapp.com",
+                      "arminramusovic11@gmail.com",
                       style: TextStyle(
                         color: Theme.of(context).colorScheme.secondary,
                         decoration: TextDecoration.underline,

@@ -1,0 +1,13 @@
+# Folders to ignore
+.git/
+build/
+.dart_tool/
+.idea/
+node_modules/
+
+# Files to ignore
+*.iml
+*.log
+*.lock
+*.DS_Store
+*.swp

@@ -1,0 +1,43 @@
+services:
+  frontend:
+    image: myapp:prod
+    container_name: eventsamo-frontend
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - API_URL=https://api.arminramusovic.com
+    restart: unless-stopped
+    networks:
+      - events-amo-backend_traefik-network
+    environment:
+      - NODE_ENV=production
+    labels:
+      # Enable Traefik
+      - "traefik.enable=true"
+      - "traefik.docker.network=events-amo-backend_traefik-network"
+      
+      # HTTPS router for app subdomain
+      - "traefik.http.routers.eventsamo-frontend.rule=Host(`app.arminramusovic.com`)"
+      - "traefik.http.routers.eventsamo-frontend.entrypoints=websecure"
+      - "traefik.http.routers.eventsamo-frontend.tls.certresolver=letsencrypt"
+      
+      # HTTP router (redirect to HTTPS)
+      - "traefik.http.routers.eventsamo-frontend-http.rule=Host(`app.arminramusovic.com`)"
+      - "traefik.http.routers.eventsamo-frontend-http.entrypoints=web"
+      - "traefik.http.routers.eventsamo-frontend-http.middlewares=redirect-to-https"
+      
+      # Service configuration
+      - "traefik.http.services.eventsamo-frontend.loadbalancer.server.port=80"
+      
+      # Middleware
+      - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.redirect-to-https.redirectscheme.permanent=true"
+
+      # Not needed with Cloudflare
+      # - "traefik.http.middlewares.frontend-compress.compress=true"
+      # - "traefik.http.routers.eventsamo-frontend.middlewares=frontend-compress"
+
+networks:
+  events-amo-backend_traefik-network:
+    external: true

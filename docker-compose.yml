@@ -1,6 +1,6 @@
 services:
   frontend:
-    image: myapp:prod
+    image: frontend:prod
     container_name: eventsamo-frontend
     build:
       context: .

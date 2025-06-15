@@ -1,5 +1,5 @@
 # Build stage
-FROM cirrusci/flutter:stable AS build
+FROM cirrusci/flutter:latest AS build
 
 # Accept build args
 ARG API_URL=https://api.arminramusovic.com

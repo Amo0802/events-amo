@@ -8,10 +8,11 @@ class WidthConstraintWrapper extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
+    final isMobile = screenWidth < 1000;
 
     return Center(
       child: Container(
-        width: screenWidth < 1000 ? screenWidth : 400,
+        width: isMobile ? screenWidth : 400,
         decoration: BoxDecoration(
           color: Colors.white,
           boxShadow: [
@@ -21,9 +22,9 @@ class WidthConstraintWrapper extends StatelessWidget {
               offset: Offset(0, 4),
             ),
           ],
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: isMobile ? null : BorderRadius.circular(20),
         ),
-        clipBehavior: Clip.antiAlias,
+        clipBehavior: isMobile ? Clip.none : Clip.antiAlias,
         child: child,
       ),
     );

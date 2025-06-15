@@ -1,5 +1,5 @@
 # Build stage
-FROM cirrusci/flutter:latest AS build
+FROM ghcr.io/cirruslabs/flutter:3.29.0 AS build
 
 # Accept build args
 ARG API_URL=https://api.arminramusovic.com
@@ -13,7 +13,7 @@ RUN flutter pub get
 COPY . .
 
 # Build for web with production optimizations
-RUN flutter build web --release --web-renderer html --dart-define=API_URL=${API_URL}
+RUN flutter build web --release --dart-define=API_URL=${API_URL}
 
 # Production stage - serve with nginx
 FROM nginx:alpine

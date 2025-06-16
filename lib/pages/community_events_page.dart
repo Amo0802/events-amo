@@ -16,7 +16,7 @@ class CommunityEventsPageState extends State<CommunityEventsPage> {
   bool _isRefreshing = false;
   final ScrollController _scrollController = ScrollController();
 
-  final List<String> cities = ['ALL', 'SPAIN', 'FRANCE', 'GERMANY', 'ITALY'];
+  final List<String> cities = ['ALL', 'SPAIN', 'FRANCE', 'GERMANY', 'ITALY', 'OTHER'];
 
   final List<String> categories = [
     'ALL',

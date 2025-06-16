@@ -29,7 +29,7 @@ class _AdminEditEventPageState extends State<AdminEditEventPage> {
   DateTime? _selectedDate;
   TimeOfDay? _selectedTime;
   List<String> _selectedCategories = [];
-  String _selectedCity = 'PODGORICA';
+  String _selectedCity = 'SPAIN';
   bool _isMainEvent = false;
   bool _isPromoted = false;
   
@@ -44,7 +44,7 @@ class _AdminEditEventPageState extends State<AdminEditEventPage> {
   ];
   
   final List<String> _availableCities = [
-    'PODGORICA', 'BERANE', 'NIKSIC'
+    'SPAIN', 'FRANCE', 'GERMANY', 'ITALY', 'OTHER'
   ];
 
   @override
@@ -564,7 +564,7 @@ class _AdminEditEventPageState extends State<AdminEditEventPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          "City",
+          "Country",
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,

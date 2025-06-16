@@ -77,7 +77,7 @@ class RegisterPageState extends State<RegisterPage> with SingleTickerProviderSta
         // If login fails, show an error message
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Login failed: ${authProvider.error}'),
+            content: Text('Login failed: An account with this email already exists.'),
             backgroundColor: Colors.red,
           ),
         );

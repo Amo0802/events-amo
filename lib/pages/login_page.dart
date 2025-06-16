@@ -77,7 +77,7 @@ class LoginPageState extends State<LoginPage> with SingleTickerProviderStateMixi
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Login failed: ${authProvider.error}'),
+              content: Text('Login failed: Invalid email or password.'),
               backgroundColor: Colors.red,
             ),
           );

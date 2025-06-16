@@ -84,7 +84,7 @@ class Event {
   
   String get formattedDate => '${startDateTime.day}/${startDateTime.month}/${startDateTime.year}';
 
-  String get location => '$address, ${city.toString().split('.').last}';
+  String get location => address;
 
   String get categoryLabels => categories.map((e) => e.toString().split('.').last).join(', ');
 

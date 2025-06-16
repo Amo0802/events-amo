@@ -241,7 +241,7 @@ class EventDetailPageState extends State<EventDetailPage> {
             children: [
               Icon(Icons.location_on),
               SizedBox(width: 12),
-              Text('${widget.event.address}, ${widget.event.city}'),
+              Text(widget.event.address),
             ],
           ),
         ],

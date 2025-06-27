@@ -8,6 +8,11 @@ services:
       args:
         - API_URL=https://api.arminramusovic.com
     restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
     networks:
       - events-amo-backend_traefik-network
     environment:

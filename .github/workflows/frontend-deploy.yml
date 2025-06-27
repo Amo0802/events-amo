@@ -116,6 +116,8 @@ jobs:
             --label "traefik.http.routers.$CONTAINER_NAME_SHORT-http.middlewares=$CONTAINER_NAME_SHORT" \
             --label "traefik.http.middlewares.$CONTAINER_NAME_SHORT.redirectscheme.scheme=https" \
             --label "traefik.http.middlewares.$CONTAINER_NAME_SHORT.redirectscheme.permanent=true" \
+            --log-opt max-size=10m \
+            --log-opt max-file=3 \
             ghcr.io/amo0802/events-amo:latest
           
           # Wait for container to start
